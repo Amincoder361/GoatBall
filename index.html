@@ -1,21 +1,172 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Intro</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>سایت فوتبال</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Lalezar', cursive;
+    }
+
+    body {
+      background-color: black;
+      overflow: hidden;
+      color: white;
+    }
+
+    .fullscreen-image {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 1s;
+    }
+
+    #mainPage {
+      display: none;
+      height: 100vh;
+      padding-bottom: 50px;
+    }
+
+    .page {
+      display: none;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .page img {
+      max-width: 95%;
+      border-radius: 20px;
+      margin-top: 20px;
+    }
+
+    .page p {
+      margin-top: 10px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    #bottomMenu {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      height: 45px;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      font-size: 13px;
+      z-index: 1000;
+    }
+
+    #bottomMenu div {
+      flex: 1;
+      text-align: center;
+      color: black;
+      cursor: pointer;
+      padding: 5px 0;
+      position: relative;
+      transition: color 0.3s;
+    }
+
+    #bottomMenu div.selected {
+      color: white;
+    }
+
+    #bottomMenu div.selected::after {
+      content: "";
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 10px;
+      background: black;
+      border-radius: 50%;
+    }
+  </style>
 </head>
 <body>
 
-  <video id="introVideo" autoplay playsinline>
-    <source src="video.mp4" type="video/mp4">
-    مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
-  </video>
+  <!-- تصاویر لودینگ -->
+  <img src="https://s6.uupload.ir/files/picsart_25-05-30_09-12-57-602_gtb0.jpg" class="fullscreen-image" id="img0">
+  <img src="https://s6.uupload.ir/files/picsart_25-05-30_09-28-31-517_vj0c.jpg" class="fullscreen-image" id="img1">
+  <img src="https://s6.uupload.ir/files/picsart_25-05-30_01-09-41-401_igdw.jpg" class="fullscreen-image" id="img2">
+  <img src="https://s6.uupload.ir/files/picsart_25-05-30_01-03-47-899_khno.jpg" class="fullscreen-image" id="img3">
+  <img src="https://s6.uupload.ir/files/picsart_25-05-30_10-05-37-665_pqjm.jpg" class="fullscreen-image" id="img4">
 
-  <button id="skipBtn">Skip</button>
+  <!-- صفحه اصلی -->
+  <div id="mainPage">
 
-  <script src="script.js"></script>
+    <div class="page" id="playerStatsPage">
+      <img src="Pl.Am" alt="آمار بازیکنان">
+    </div>
+
+    <div class="page" id="tablePage">
+      <img src="Ja" alt="جدول">
+    </div>
+
+    <div class="page" id="teamHonorsPage">
+      <img src="Ef.Team" alt="افتخارات تیم‌ها">
+      <p>در این لیست اسم 5 تا از پر افتخارترین تیم‌ها نمایش داده می‌شود و هر وقت هر تیم جز 5 تا از پر افتخارترین‌ها باشد وارد لیست می‌شود.</p>
+    </div>
+
+    <div class="page" id="playerHonorsPage">
+      <img src="Ef.Pl" alt="افتخارات بازیکنان">
+      <p>در این لیست اسم 5 تا از پر افتخار ترین بازیکن ها نمایش داده میشه‌ و هروقت هر بازیکن جز 5 تا از پر افتخارترین‌ بازیکنان باشد وارد لیست می‌شود.</p>
+    </div>
+
+    <div class="page" id="schedulePage">
+      <img src="Ba.Mo" alt="برنامه مسابقات">
+    </div>
+
+    <!-- منو -->
+    <div id="bottomMenu">
+      <div data-page="playerStatsPage">آمار بازیکنان</div>
+      <div data-page="tablePage" class="selected">جدول</div>
+      <div data-page="teamHonorsPage">افتخارات تیم ها</div>
+      <div data-page="playerHonorsPage">افتخارات بازیکنان</div>
+      <div data-page="schedulePage">برنامه مسابقات</div>
+    </div>
+
+  </div>
+
+  <script>
+    const images = document.querySelectorAll('.fullscreen-image');
+    const randomIndex = Math.floor(Math.random() * images.length);
+    images[randomIndex].style.opacity = 1;
+
+    setTimeout(() => {
+      images.forEach(img => img.style.display = 'none');
+      document.getElementById('mainPage').style.display = 'block';
+      showPage('tablePage');
+    }, 5000);
+
+    const menuItems = document.querySelectorAll('#bottomMenu div');
+    const pages = document.querySelectorAll('.page');
+
+    function showPage(pageId) {
+      pages.forEach(p => p.style.display = 'none');
+      const page = document.getElementById(pageId);
+      if (page) {
+        page.style.display = 'block';
+      }
+    }
+
+    menuItems.forEach(item => {
+      item.addEventListener('click', () => {
+        menuItems.forEach(i => i.classList.remove('selected'));
+        item.classList.add('selected');
+        const pageId = item.getAttribute('data-page');
+        showPage(pageId);
+      });
+    });
+  </script>
 </body>
 </html>
