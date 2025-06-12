@@ -1,172 +1,86 @@
+
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>GoatBall</title>
-  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Lalezar', cursive;
-    }
-
-    body {
-      background-color: black;
-      overflow: hidden;
-      color: white;
-    }
-
-    .fullscreen-image {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0;
-      transition: opacity 1s;
-    }
-
-    #mainPage {
-      display: none;
-      height: 100vh;
-      padding-bottom: 50px;
-    }
-
-    .page {
-      display: none;
-      text-align: center;
-      padding: 10px;
-    }
-
-    .page img {
-      max-width: 95%;
-      border-radius: 20px;
-      margin-top: 20px;
-    }
-
-    .page p {
-      margin-top: 10px;
-      font-size: 14px;
-      text-align: center;
-    }
-
-    #bottomMenu {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      height: 45px;
-      background: white;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      font-size: 13px;
-      z-index: 1000;
-    }
-
-    #bottomMenu div {
-      flex: 1;
-      text-align: center;
-      color: black;
-      cursor: pointer;
-      padding: 5px 0;
-      position: relative;
-      transition: color 0.3s;
-    }
-
-    #bottomMenu div.selected {
-      color: white;
-    }
-
-    #bottomMenu div.selected::after {
-      content: "";
-      position: absolute;
-      bottom: 5px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 10px;
-      height: 10px;
-      background: black;
-      border-radius: 50%;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>TTR</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton:wght@400&family=Lalezar&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
 </head>
 <body>
-
-  <!-- تصاویر لودینگ -->
-  <img src="https://s6.uupload.ir/files/picsart_25-05-30_09-12-57-602_gtb0.jpg" class="fullscreen-image" id="img0">
-  <img src="https://s6.uupload.ir/files/picsart_25-05-30_09-28-31-517_vj0c.jpg" class="fullscreen-image" id="img1">
-  <img src="https://s6.uupload.ir/files/picsart_25-05-30_01-09-41-401_igdw.jpg" class="fullscreen-image" id="img2">
-  <img src="https://s6.uupload.ir/files/picsart_25-05-30_01-03-47-899_khno.jpg" class="fullscreen-image" id="img3">
-  <img src="https://s6.uupload.ir/files/picsart_25-05-30_10-05-37-665_pqjm.jpg" class="fullscreen-image" id="img4">
-
-  <!-- صفحه اصلی -->
-  <div id="mainPage">
-
-    <div class="page" id="playerStatsPage">
-      <img src="Pl.Am" alt="آمار بازیکنان">
+    <!-- Admin Button -->
+    <div id="admin-button" class="admin-button" onclick="openAdminLogin()">A</div>
+    
+    <!-- Admin Login Modal -->
+    <div id="admin-modal" class="admin-modal">
+        <div class="admin-modal-content">
+            <span class="admin-close" onclick="closeAdminLogin()">&times;</span>
+            <h2>ورود ادمین</h2>
+            <input type="password" id="admin-code" placeholder="کد ادمین را وارد کنید" dir="rtl">
+            <button onclick="checkAdminCode()">تایید</button>
+            <div id="admin-error" class="admin-error"></div>
+        </div>
     </div>
-
-    <div class="page" id="tablePage">
-      <img src="Ja" alt="جدول">
+    
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="admin-panel">
+        <div class="admin-panel-content">
+            <span class="admin-close" onclick="closeAdminPanel()">&times;</span>
+            <h2>پنل کنترل ادمین</h2>
+            <div class="admin-controls">
+                <button id="reset-btn" onclick="resetSite()">Reset</button>
+                <div class="admin-vote-section">
+                    <input type="text" id="admin-vote-input" placeholder="@username" dir="ltr">
+                    <button id="admin-vote-btn" onclick="adminVote()">Vote</button>
+                </div>
+                <div class="vote-toggle-container">
+                    <button id="vote-toggle-btn" onclick="toggleVoteStatus()" class="vote-toggle">Off Vote / On Vote</button>
+                    <div id="vote-status" class="vote-status">Vote ✅</div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="page" id="teamHonorsPage">
-      <img src="Ef.Team" alt="افتخارات تیم‌ها">
-      <p>در این لیست اسم 5 تا از پر افتخارترین تیم‌ها نمایش داده می‌شود و هر وقت هر تیم جز 5 تا از پر افتخارترین‌ها باشد وارد لیست می‌شود.</p>
+</body>
+    <div id="content">
+        <div id="home-content" class="content-section active">
+            <div class="home-text">
+                <p>سلام بر شما دوستان عزیز</p>
+                <p>خیلی خوش اومدید به سایت ما</p>
+                <p>شما در این سایت میتونید به ادیتور مورد علاقه خودتون رای بدید</p>
+                <p>برای رای دادن میتوانید به بخش Vote مراجعه کنید</p>
+            </div>
+        </div>
+        <div id="vote-content" class="content-section">
+            <div class="vote-section">
+                <p class="vote-title">دوستان در این بخش شما می‌توانید آیدی اینستاگرام ادیتور مورد علاقه خود را وارد کنید :</p>
+                <div class="vote-form">
+                    <input type="text" id="instagram-input" placeholder="@username" dir="ltr">
+                    <button id="submit-vote" onclick="submitVote()">ثبت رای</button>
+                </div>
+                <div id="vote-message" class="vote-message"></div>
+            </div>
+        </div>
+        <div id="results-content" class="content-section">
+            <div class="results-section">
+                <div id="results-list" class="results-list">
+                    <!-- Results will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="page" id="playerHonorsPage">
-      <img src="Ef.Pl" alt="افتخارات بازیکنان">
-      <p>در این لیست اسم 5 تا از پر افتخار ترین بازیکن ها نمایش داده میشه‌ و هروقت هر بازیکن جز 5 تا از پر افتخارترین‌ بازیکنان باشد وارد لیست می‌شود.</p>
+    
+    <div class="menu-container">
+        <ul>
+            <li id="vote">Vote</li>
+            <li id="home" class="active">Home</li>
+            <li id="results">Results</li>
+        </ul>
     </div>
-
-    <div class="page" id="schedulePage">
-      <img src="Ba.Mo" alt="برنامه مسابقات">
-    </div>
-
-    <!-- منو -->
-    <div id="bottomMenu">
-      <div data-page="playerStatsPage">آمار بازیکنان</div>
-      <div data-page="tablePage" class="selected">جدول</div>
-      <div data-page="teamHonorsPage">افتخارات تیم ها</div>
-      <div data-page="playerHonorsPage">افتخارات بازیکنان</div>
-      <div data-page="schedulePage">برنامه مسابقات</div>
-    </div>
-
-  </div>
-
-  <script>
-    const images = document.querySelectorAll('.fullscreen-image');
-    const randomIndex = Math.floor(Math.random() * images.length);
-    images[randomIndex].style.opacity = 1;
-
-    setTimeout(() => {
-      images.forEach(img => img.style.display = 'none');
-      document.getElementById('mainPage').style.display = 'block';
-      showPage('tablePage');
-    }, 5000);
-
-    const menuItems = document.querySelectorAll('#bottomMenu div');
-    const pages = document.querySelectorAll('.page');
-
-    function showPage(pageId) {
-      pages.forEach(p => p.style.display = 'none');
-      const page = document.getElementById(pageId);
-      if (page) {
-        page.style.display = 'block';
-      }
-    }
-
-    menuItems.forEach(item => {
-      item.addEventListener('click', () => {
-        menuItems.forEach(i => i.classList.remove('selected'));
-        item.classList.add('selected');
-        const pageId = item.getAttribute('data-page');
-        showPage(pageId);
-      });
-    });
-  </script>
+    
+    <script src="script.js"></script>
 </body>
 </html>
