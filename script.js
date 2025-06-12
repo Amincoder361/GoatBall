@@ -1,4 +1,3 @@
-
 // Using localStorage for demonstration (will work locally)
 
 document.addEventListener('DOMContentLoaded', function() {
