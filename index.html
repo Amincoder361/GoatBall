@@ -13,8 +13,8 @@
   <div class="page" id="home-page" style="display: flex;">
     <div class="content">
       <div class="home-content">
-        <h1>Group 1 voting has begun.</h1>
-        <div class="home-video-container">
+        <h1>Welcome to TheTopRange</h1>
+        <div class="video-container">
           <iframe 
             id="tutorial-video"
             src="https://www.youtube.com/embed/atGFu48GJ6g" 
@@ -41,7 +41,7 @@
             </svg>
             <span>Instagram</span>
           </button>
-
+          
           <button class="social-btn youtube-btn" onclick="window.open('https://www.youtube.com/@TTR_ir', '_blank')">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -99,49 +99,6 @@
     </div>
   </div>
 
-  <!-- Explore Page -->
-  <div class="page" id="explore-page" style="display: none;">
-    <section class="reels-section">
-      <button class="refresh-btn" id="refresh-reels-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12c0 5-4 9-9 9s-9-4-9-9 4-9 9-9c2.5 0 4.8 1 6.4 2.6L21 3v6h-6"/>
-        </svg>
-        Refresh
-      </button>
-      <div class="reel__container">
-        <div class="reel__content" id="reel-content">
-          <div class="no-posts">No reels uploaded yet</div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- Add Post Page -->
-  <div class="page" id="addpost-page" style="display: none;">
-    <div class="content">
-      <div class="addpost-container">
-        <h1>Add Post</h1>
-        <div class="addpost-content">
-          <div class="upload-form">
-            <div class="form-group">
-              <label for="video-upload">Select Video:</label>
-              <input type="file" id="video-upload" accept="video/*" required />
-            </div>
-            <div class="form-group">
-              <label for="caption-input">Video Caption (Required):</label>
-              <textarea id="caption-input" placeholder="Write your video caption..." required></textarea>
-            </div>
-            <div class="form-group">
-              <label for="instagram-id-input">Instagram ID:</label>
-              <input type="text" id="instagram-id-input" placeholder="Instagram ID (without @)" required />
-            </div>
-            <button class="add-post-button" id="add-post-button">Upload Post</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Admin Panel -->
   <div class="page" id="admin-panel" style="display: none;">
     <button class="admin-close-btn">✕</button>
@@ -162,77 +119,21 @@
       </div>
     </div>
   </div>
-
-  <!-- Comment Modal -->
-  <div class="comment-modal" id="comment-modal" style="display: none;">
-    <div class="comment-modal-content">
-      <button class="comment-close-btn">✕</button>
-      <div class="card">
-        <span class="title">Comments</span>
-        <div id="comments-container" class="comments-container">
-          <!-- Comments will be loaded here -->
-        </div>
-        <div class="text-box">
-          <div class="box-container">
-            <textarea id="comment-input" placeholder="Write a comment..." maxlength="500"></textarea>
-            <div class="formatting">
-              <button type="button">
-                <svg fill="none" viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#707277" d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"></path>
-                  <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#707277" d="M8 12H16"></path>
-                </svg>
-              </button>
-              <button type="button">
-                <svg fill="none" viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#707277" d="M8 12H16"></path>
-                  <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#707277" d="M12 8V16"></path>
-                </svg>
-              </button>
-              <button type="button">
-                <svg fill="none" viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#707277" d="M8 9L12 5L16 9"></path>
-                  <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#707277" d="M8 15L12 19L16 15"></path>
-                </svg>
-              </button>
-              <button type="button">
-                <svg fill="none" viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#707277" d="M21 5L12 14L8 10"></path>
-                </svg>
-              </button>
-              <button type="button">
-                <svg fill="none" viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#707277" d="M18 15L12 9L6 15"></path>
-                </svg>
-              </button>
-              <button class="send" id="send-comment">
-                <svg fill="none" viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#ffffff" d="M20 4L12 12L4 4H20Z"></path>
-                  <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#ffffff" d="M4 4V20L12 12"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  
   <div class="menu-container">
     <nav class="navMenu">
       <a href="#" data-page="vote">Vote</a>
-      <a href="#" data-page="result">Result</a>
       <a href="#" data-page="home" class="active">Home</a>
-      <a href="#" data-page="explore">Explore</a>
-      <a href="#" data-page="addpost">Add Post</a>
+      <a href="#" data-page="result">Result</a>
       <div class="dot"></div>
     </nav>
   </div>
-
+  
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-
+    
     // Firebase configuration - شما باید این کانفیگ را از Firebase Console دریافت کنید
     const firebaseConfig = {
       apiKey: "AIzaSyBzn5uZbs4byndTaog2VUOqeMsRMs1sKgo",
@@ -243,10 +144,10 @@
       messagingSenderId: "661391685603",
       appId: "1:661391685603:web:b892ae0b308df30e1e52d6",
     };
-
+    
     let app, database;
     let useFirebase = false;
-
+    
     try {
       if (firebaseConfig.apiKey) {
         app = initializeApp(firebaseConfig);
@@ -258,7 +159,7 @@
       console.log('Firebase not configured, using localStorage');
       useFirebase = false;
     }
-
+    
     // Make Firebase functions globally available
     window.firebaseDb = {
       useFirebase: useFirebase,
