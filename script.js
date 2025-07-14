@@ -1068,26 +1068,59 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Update leaderboard function
-  function updateLeaderboard() {
-    if (window.firebaseDb && window.firebaseDb.useFirebase) {
-      try {
-        const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
-        window.firebaseDb.onValue(votesRef, (snapshot) => {
-          const votes = snapshot.val() || {};
-          displayLeaderboard(votes);
-        }, { onlyOnce: true });
-      } catch (error) {
-        console.log('Firebase error:', error);
-        // Fallback to localStorage
+function updateLeaderboard() {
+  const leaderboardBody = document.getElementById('leaderboard-body');
+  if (!leaderboardBody) return;
+
+  // Clear old entries
+  leaderboardBody.innerHTML = '';
+
+  // خواندن از Firebase یا LocalStorage
+  if (window.firebaseDb && window.firebaseDb.useFirebase) {
+    try {
+      const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
+      window.firebaseDb.onValue(votesRef, (snapshot) => {
+        const votes = snapshot.val() || {};
+        renderLeaderboard(votes);
+      }, (error) => {
+        console.error('Firebase read error:', error);
         const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-        displayLeaderboard(votes);
-      }
-    } else {
-      // Use localStorage
+        renderLeaderboard(votes);
+      });
+    } catch (error) {
+      console.error('Firebase error:', error);
       const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-      displayLeaderboard(votes);
+      renderLeaderboard(votes);
     }
+  } else {
+    const votes = JSON.parse(localStorage.getItem('votes') || '{}');
+    renderLeaderboard(votes);
   }
+}
+
+function renderLeaderboard(votes) {
+  const leaderboardBody = document.getElementById('leaderboard-body');
+  if (!leaderboardBody) return;
+
+  const sorted = Object.entries(votes)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 10); // Top 10
+
+  if (sorted.length === 0) {
+    leaderboardBody.innerHTML = `<tr><td colspan="3">هنوز رأیی ثبت نشده</td></tr>`;
+    return;
+  }
+
+  sorted.forEach(([username, count], index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${username}</td>
+      <td>${count}</td>
+    `;
+    leaderboardBody.appendChild(row);
+  });
+}
 
   // Display leaderboard
   function displayLeaderboard(votes) {
