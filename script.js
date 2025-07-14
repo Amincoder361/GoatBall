@@ -109,6 +109,46 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize protection
   preventInteractions();
 
+  // Connection status management
+  let connectionStatusShown = false;
+
+  function showConnectionStatus(isConnected) {
+    // Only show once per session
+    if (connectionStatusShown) return;
+    connectionStatusShown = true;
+
+    const statusElement = document.getElementById('connection-status');
+    const statusIcon = document.getElementById('status-icon');
+    const statusText = document.getElementById('status-text');
+
+    if (!statusElement || !statusIcon || !statusText) return;
+
+    // Set content based on connection status
+    if (isConnected) {
+      statusElement.className = 'connection-status connected';
+      statusIcon.textContent = '✓';
+      statusText.textContent = 'Connected';
+    } else {
+      statusElement.className = 'connection-status disconnected';
+      statusIcon.textContent = '✕';
+      statusText.textContent = 'Not Connected';
+    }
+
+    // Show the notification
+    statusElement.style.display = 'block';
+    setTimeout(() => {
+      statusElement.classList.add('show');
+    }, 100);
+
+    // Hide after 5 seconds
+    setTimeout(() => {
+      statusElement.classList.remove('show');
+      setTimeout(() => {
+        statusElement.style.display = 'none';
+      }, 500);
+    }, 5000);
+  }
+
   // Admin access variables
   let homeClickCount = 0;
   let homeClickTimer = null;
@@ -232,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (targetPage === 'result') {
         setTimeout(() => {
           updateLeaderboard();
-        }, 100);
+        }, 500);
       }
 
       // Remove focus immediately
@@ -284,7 +324,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (targetPage === 'result') {
         setTimeout(() => {
           updateLeaderboard();
-        }, 100);
+        }, 500);
       }
 
       // Remove focus immediately to prevent any highlight
@@ -292,8 +332,6 @@ document.addEventListener('DOMContentLoaded', function() {
         this.blur();
       }, 10);
     });
-
-
 
     // Prevent any focus highlight
     link.addEventListener('focus', function() {
@@ -313,15 +351,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Input validation and auto-conversion
   const inputField = document.querySelector('.input-container input');
-  const sendButton = document.querySelector('.input-container button');
+  const sendButton = document.querySelector('.input-container .button:not(.change-button)');
+  const changeButton = document.querySelector('.change-button');
   const inputContainer = document.querySelector('.input-container');
 
   function validateAndConvert(text) {
     // Remove @ if exists at the beginning
     let cleanText = text.startsWith('@') ? text.substring(1) : text;
 
-    // Check for invalid characters (non-English letters, spaces, and invalid symbols)
-    const validPattern = /^[a-zA-Z0-9._]+$/;
+    // Replace dots with asterisk to preserve usernames, remove other invalid chars
+    cleanText = cleanText.replace(/\./g, '*').replace(/[#$\/\[\]]/g, '');
+
+    // Check for invalid characters (only allow English letters, numbers, underscore and asterisk)
+    const validPattern = /^[a-zA-Z0-9_*]+$/;
     const hasInvalidChars = !validPattern.test(cleanText);
     const hasSpaces = /\s/.test(cleanText);
 
@@ -395,6 +437,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // Change button event listener
+  changeButton.addEventListener('click', function(e) {
+    e.preventDefault();
+
+    // Check if site is locked
+    if (isLocked) {
+      showError();
+      return;
+    }
+
+    const inputValue = inputField.value.trim();
+
+    if (inputValue === '') {
+      showError();
+      return;
+    }
+
+    const validation = validateAndConvert(inputValue);
+
+    if (!validation.isValid) {
+      showError();
+    } else {
+      // Update input field with converted text
+      inputField.value = validation.convertedText;
+
+      // Show success state
+      showSuccess();
+
+      // Change vote
+      changeVote(validation.convertedText);
+    }
+  });
+
   // Admin panel variables
   let isLocked = false;
 
@@ -440,19 +515,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Reset form
       const inputField = document.querySelector('.input-container input');
-      const sendButton = document.querySelector('.input-container button');
+      const sendButton = document.querySelector('.input-container .button:not(.change-button)');
+      const changeButton = document.querySelector('.change-button');
       const inputContainer = document.querySelector('.input-container');
-      
+
       if (inputField) {
         inputField.value = '';
         inputField.disabled = false;
       }
-      
+
       if (sendButton) {
         sendButton.disabled = false;
         sendButton.textContent = 'Send';
       }
-      
+
+      if (changeButton) {
+        changeButton.disabled = true;
+        changeButton.textContent = 'Change';
+      }
+
       if (inputContainer) {
         inputContainer.classList.remove('error', 'success', 'voted');
       }
@@ -585,6 +666,114 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Function to display full results
+  function displayFullResults() {
+    const fullscreenOverlay = document.getElementById('fullscreen-results-overlay');
+
+    if (fullscreenOverlay) {
+      fullscreenOverlay.classList.add('show');
+
+      if (window.firebaseDb && window.firebaseDb.useFirebase) {
+        try {
+          const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
+          window.firebaseDb.onValue(votesRef, (snapshot) => {
+            const votes = snapshot.val() || {};
+            showFullscreenResults(votes);
+          }, { onlyOnce: true });
+        } catch (error) {
+          console.log('Firebase error in displayFullResults:', error);
+          showFullscreenResults({});
+        }
+      } else {
+        console.log('Firebase not available for full results');
+        showFullscreenResults({});
+      }
+    }
+  }
+
+  // Function to close fullscreen results
+  function closeFullscreenResults() {
+    const fullscreenOverlay = document.getElementById('fullscreen-results-overlay');
+    if (fullscreenOverlay) {
+      fullscreenOverlay.classList.remove('show');
+    }
+  }
+
+  // Function to show full results
+  function showFullResults(votes, container) {
+    const sortedVotes = Object.entries(votes)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10); // Top 10
+
+    container.innerHTML = '';
+
+    if (sortedVotes.length === 0) {
+      container.innerHTML = '<div class="no-data">هیچ رای ثبت نشده</div>';
+      return;
+    }
+
+    sortedVotes.forEach(([username, voteCount], index) => {
+      const item = document.createElement('div');
+      item.className = 'full-result-item';
+      
+      // Convert username for display (replace * with .)
+      const displayUsername = convertDisplayName(username);
+      
+      item.innerHTML = `
+        <span class="result-rank">${index + 1}</span>
+        <span class="result-username">${displayUsername}</span>
+        <span class="result-votes">${voteCount}</span>
+      `;
+      container.appendChild(item);
+    });
+  }
+
+  // Function to show fullscreen results
+  function showFullscreenResults(votes) {
+    const fullscreenBody = document.getElementById('fullscreen-results-body');
+
+    if (!fullscreenBody) {
+      console.log('Fullscreen results body not found');
+      return;
+    }
+
+    // Clear existing content
+    fullscreenBody.innerHTML = '';
+
+    // Convert votes object to array and sort by votes (descending)
+    const sortedVotes = Object.entries(votes)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 10); // Top 10
+
+    if (sortedVotes.length === 0) {
+      fullscreenBody.innerHTML = '<tr><td colspan="3" class="fullscreen-no-data">هیچ رای ثبت نشده</td></tr>';
+      return;
+    }
+
+    // Fill with actual data
+    sortedVotes.forEach(([username, voteCount], index) => {
+      const rank = index + 1;
+      const row = document.createElement('tr');
+      row.className = `fullscreen-rank-${rank}`;
+
+      let medalHtml = '';
+      if (rank <= 3) {
+        medalHtml = `<span class="fullscreen-rank-medal">${rank}</span>`;
+      }
+
+      // Convert username for display (replace * with .)
+      const displayUsername = convertDisplayName(username);
+
+      row.innerHTML = `
+        <td>${medalHtml || rank}</td>
+        <td>${displayUsername}</td>
+        <td>${voteCount}</td>
+      `;
+
+      fullscreenBody.appendChild(row);
+    });
+  }
+
   // Add close button event listener when DOM is ready
   setTimeout(() => {
     const closeBtn = document.querySelector('.admin-close-btn');
@@ -613,11 +802,20 @@ document.addEventListener('DOMContentLoaded', function() {
     if (voteBtn && voteContainer) {
       voteBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        if (voteContainer.style.display === 'none') {
+        if (voteContainer.style.display === 'none' || voteContainer.style.display === '') {
           voteContainer.style.display = 'block';
         } else {
           voteContainer.style.display = 'none';
         }
+      });
+    }
+
+    // Add Full Result button event listener
+    const fullResultBtn = document.getElementById('full-result-btn');
+    if (fullResultBtn) {
+      fullResultBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        displayFullResults();
       });
     }
 
@@ -637,6 +835,22 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
+    // Add fullscreen close button event listener
+    const fullscreenCloseBtn = document.getElementById('fullscreen-close-btn');
+    if (fullscreenCloseBtn) {
+      fullscreenCloseBtn.addEventListener('click', closeFullscreenResults);
+    }
+
+    // Close fullscreen results when clicking outside
+    const fullscreenOverlay = document.getElementById('fullscreen-results-overlay');
+    if (fullscreenOverlay) {
+      fullscreenOverlay.addEventListener('click', function(e) {
+        if (e.target === fullscreenOverlay) {
+          closeFullscreenResults();
+        }
+      });
+    }
+
     // Initialize lock state
     initializeLockState();
   }, 100);
@@ -651,15 +865,19 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    // Parse input format: @username+number
-    const match = inputValue.match(/^@?([a-zA-Z0-9._]+)\+(\d+)$/);
+    // Parse input format: @username+number or @username-number
+    const match = inputValue.match(/^@?([a-zA-Z0-9._]+)([+-])(\d+)$/);
     if (!match) {
-      alert('فرمت صحیح: @username+2');
+      alert('فرمت صحیح: @username+2 یا @username-2');
       return;
     }
 
-    const username = '@' + match[1].toLowerCase();
-    const voteCount = parseInt(match[2]);
+    // Replace dots with asterisk, remove other invalid characters
+    let cleanUsername = match[1].replace(/\./g, '*').replace(/[#$\/\[\]]/g, '');
+    const username = '@' + cleanUsername.toLowerCase();
+    const operation = match[2];
+    const voteCount = parseInt(match[3]);
+    const isSubtract = operation === '-';
 
     if (voteCount <= 0) {
       alert('تعداد رای باید عدد مثبت باشد');
@@ -672,12 +890,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
         window.firebaseDb.onValue(votesRef, (snapshot) => {
           const votes = snapshot.val() || {};
-          
-          // Add votes for this user
+
+          // Add or subtract votes for this user
           if (votes[username]) {
-            votes[username] += voteCount;
+            votes[username] += isSubtract ? -voteCount : voteCount;
+            if (votes[username] < 0) {
+              votes[username] = 0;  // Prevent negative votes
+            }
           } else {
-            votes[username] = voteCount;
+            votes[username] = isSubtract ? 0 : voteCount; // Start from 0 if subtracting
           }
 
           // Save back to Firebase
@@ -685,41 +906,44 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(() => {
               console.log('Admin vote submitted successfully');
               adminVoteInput.value = '';
-              alert(`${voteCount} رای برای ${username} ثبت شد`);
+              alert(`${voteCount} رای برای ${username} ${isSubtract ? 'کم شد' : 'ثبت شد'}`);
               updateLeaderboard();
             })
             .catch((error) => {
               console.log('Firebase write error:', error);
-              submitAdminVoteToLocalStorage(username, voteCount);
+              submitAdminVoteToLocalStorage(username, voteCount, isSubtract);
             });
         }, { onlyOnce: true });
       } catch (error) {
         console.log('Firebase error:', error);
-        submitAdminVoteToLocalStorage(username, voteCount);
+        submitAdminVoteToLocalStorage(username, voteCount, isSubtract);
       }
     } else {
-      submitAdminVoteToLocalStorage(username, voteCount);
+      submitAdminVoteToLocalStorage(username, voteCount, isSubtract);
     }
   }
 
   // Submit admin vote to localStorage
-  function submitAdminVoteToLocalStorage(username, voteCount) {
+  function submitAdminVoteToLocalStorage(username, voteCount, isSubtract) {
     const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-    
+
     if (votes[username]) {
-      votes[username] += voteCount;
+      votes[username] += isSubtract ? -voteCount : voteCount;
+      if (votes[username] < 0) {
+        votes[username] = 0;  // Prevent negative votes
+      }
     } else {
-      votes[username] = voteCount;
+      votes[username] = isSubtract ? 0 : voteCount; // Start from 0 if subtracting
     }
 
     localStorage.setItem('votes', JSON.stringify(votes));
-    
+
     const adminVoteInput = document.getElementById('admin-vote-input');
     if (adminVoteInput) {
       adminVoteInput.value = '';
     }
-    
-    alert(`${voteCount} رای برای ${username} ثبت شد`);
+
+    alert(`${voteCount} رای برای ${username} ${isSubtract ? 'کم شد' : 'ثبت شد'}`);
     updateLeaderboard();
   }
 
@@ -738,7 +962,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
         window.firebaseDb.onValue(votesRef, (snapshot) => {
           const votes = snapshot.val() || {};
-          
+
           // Increment vote count for this user
           if (votes[username]) {
             votes[username]++;
@@ -752,6 +976,7 @@ document.addEventListener('DOMContentLoaded', function() {
               console.log('Vote submitted successfully');
               // Mark user as voted
               localStorage.setItem('hasVoted', 'true');
+              localStorage.setItem('votedFor', username);
               markAsVoted();
             })
             .catch((error) => {
@@ -774,7 +999,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Submit vote to localStorage
   function submitVoteToLocalStorage(username) {
     const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-    
+
     if (votes[username]) {
       votes[username]++;
     } else {
@@ -783,22 +1008,138 @@ document.addEventListener('DOMContentLoaded', function() {
 
     localStorage.setItem('votes', JSON.stringify(votes));
     localStorage.setItem('hasVoted', 'true');
+    localStorage.setItem('votedFor', username);
     markAsVoted();
+  }
+
+  // Change vote function
+  function changeVote(newUsername) {
+    const hasChanged = localStorage.getItem('hasChanged') === 'true';
+    if (hasChanged) {
+      showError();
+      return;
+    }
+
+    const oldUsername = localStorage.getItem('votedFor');
+    if (!oldUsername) {
+      showError();
+      return;
+    }
+
+    if (window.firebaseDb && window.firebaseDb.useFirebase) {
+      try {
+        // Get current votes from Firebase
+        const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
+        window.firebaseDb.onValue(votesRef, (snapshot) => {
+          const votes = snapshot.val() || {};
+
+          // Remove vote from old user
+          if (votes[oldUsername] && votes[oldUsername] > 0) {
+            votes[oldUsername]--;
+            if (votes[oldUsername] === 0) {
+              delete votes[oldUsername];
+            }
+          }
+
+          // Add vote to new user
+          if (votes[newUsername]) {
+            votes[newUsername]++;
+          } else {
+            votes[newUsername] = 1;
+          }
+
+          // Save back to Firebase
+          window.firebaseDb.set(votesRef, votes)
+            .then(() => {
+              console.log('Vote changed successfully');
+              localStorage.setItem('votedFor', newUsername);
+              localStorage.setItem('hasChanged', 'true');
+              markAsChanged();
+            })
+            .catch((error) => {
+              console.log('Firebase write error:', error);
+              changeVoteToLocalStorage(oldUsername, newUsername);
+            });
+        }, { onlyOnce: true });
+      } catch (error) {
+        console.log('Firebase error:', error);
+        changeVoteToLocalStorage(oldUsername, newUsername);
+      }
+    } else {
+      changeVoteToLocalStorage(oldUsername, newUsername);
+    }
+  }
+
+  // Change vote to localStorage
+  function changeVoteToLocalStorage(oldUsername, newUsername) {
+    const votes = JSON.parse(localStorage.getItem('votes') || '{}');
+
+    // Remove vote from old user
+    if (votes[oldUsername] && votes[oldUsername] > 0) {
+      votes[oldUsername]--;
+      if (votes[oldUsername] === 0) {
+        delete votes[oldUsername];
+      }
+    }
+
+    // Add vote to new user
+    if (votes[newUsername]) {
+      votes[newUsername]++;
+    } else {
+      votes[newUsername] = 1;
+    }
+
+    localStorage.setItem('votes', JSON.stringify(votes));
+    localStorage.setItem('votedFor', newUsername);
+    localStorage.setItem('hasChanged', 'true');
+    markAsChanged();
+  }
+
+  // Mark as changed
+  function markAsChanged() {
+    const inputContainer = document.querySelector('.input-container');
+    const inputField = document.querySelector('.input-container input');
+    const changeButton = document.querySelector('.change-button');
+
+    // Remove previous states
+    inputContainer.classList.remove('error', 'voted');
+    inputContainer.classList.add('success');
+
+    inputField.disabled = true;
+    changeButton.disabled = true;
+    changeButton.textContent = 'Changed ✓';
+
+    // Clear input
+    inputField.value = '';
   }
 
   // Mark input as voted
   function markAsVoted() {
     const inputContainer = document.querySelector('.input-container');
     const inputField = document.querySelector('.input-container input');
-    const sendButton = document.querySelector('.input-container button');
+    const sendButton = document.querySelector('.input-container .button:not(.change-button)');
+    const changeButton = document.querySelector('.change-button');
 
-    inputContainer.classList.add('voted');
-    inputField.disabled = true;
+    // Remove previous states and add success state
+    inputContainer.classList.remove('error');
+    inputContainer.classList.add('success');
+
+    // Don't disable input field so user can use change button
+    inputField.disabled = false;
     sendButton.disabled = true;
     sendButton.textContent = 'Voted ✓';
-    
+
+    // Enable change button
+    changeButton.disabled = false;
+
     // Clear input
     inputField.value = '';
+
+    // After 3 seconds, change to voted state
+    setTimeout(() => {
+      inputContainer.classList.remove('success');
+      inputContainer.classList.add('voted');
+    }, 3000);
   }
 
   // Update leaderboard function
@@ -808,25 +1149,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
         window.firebaseDb.onValue(votesRef, (snapshot) => {
           const votes = snapshot.val() || {};
+          console.log('Firebase votes data loaded:', votes);
           displayLeaderboard(votes);
         }, { onlyOnce: true });
       } catch (error) {
-        console.log('Firebase error:', error);
-        // Fallback to localStorage
-        const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-        displayLeaderboard(votes);
+        console.log('Firebase error in updateLeaderboard:', error);
+        // Show empty leaderboard instead of localStorage fallback
+        displayLeaderboard({});
       }
     } else {
-      // Use localStorage
-      const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-      displayLeaderboard(votes);
+      console.log('Firebase not available, showing empty leaderboard');
+      // Show empty leaderboard when Firebase is not available
+      displayLeaderboard({});
     }
+  }
+
+  // Function to convert display name (replace * back to .)
+  function convertDisplayName(username) {
+    return username.replace(/\*/g, '.');
   }
 
   // Display leaderboard
   function displayLeaderboard(votes) {
     const leaderboardBody = document.getElementById('leaderboard-body');
-    
+
     if (!leaderboardBody) {
       console.log('Leaderboard body not found');
       return;
@@ -859,18 +1205,21 @@ document.addEventListener('DOMContentLoaded', function() {
       const rank = index + 1;
       const row = document.createElement('tr');
       row.className = `rank-${rank}`;
-      
+
       let medalHtml = '';
       if (rank <= 3) {
         medalHtml = `<span class="rank-medal">${rank}</span>`;
       }
 
+      // Convert username for display (replace * with .)
+      const displayUsername = convertDisplayName(username);
+
       row.innerHTML = `
         <td>${medalHtml || rank}</td>
-        <td>${username}</td>
+        <td>${displayUsername}</td>
         <td>${voteCount}</td>
       `;
-      
+
       leaderboardBody.appendChild(row);
     });
 
@@ -886,22 +1235,36 @@ document.addEventListener('DOMContentLoaded', function() {
         leaderboardBody.appendChild(row);
       }
     }
-
-    }
+  }
 
   // Initialize vote state
   function initializeVoteState() {
     const hasVoted = localStorage.getItem('hasVoted') === 'true';
+    const hasChanged = localStorage.getItem('hasChanged') === 'true';
+
     if (hasVoted) {
       markAsVoted();
     }
+
+    if (hasChanged) {
+      markAsChanged();
+    }
   }
+
+  // Clear localStorage to ensure only Firebase data is used
+  localStorage.removeItem('votes');
 
   // Initialize vote state when page loads
   initializeVoteState();
+
+  // Initialize leaderboard when page loads
+  setTimeout(() => {
+    updateLeaderboard();
+  }, 3000); // Wait for Firebase connection
 
   // Make functions globally available
   window.updateLeaderboard = updateLeaderboard;
   window.submitAdminVote = submitAdminVote;
   window.submitAdminVoteToLocalStorage = submitAdminVoteToLocalStorage;
+  window.showConnectionStatus = showConnectionStatus;
 });
