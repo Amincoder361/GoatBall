@@ -109,46 +109,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize protection
   preventInteractions();
 
-  // Connection status management
-  let connectionStatusShown = false;
-
-  function showConnectionStatus(isConnected) {
-    // Only show once per session
-    if (connectionStatusShown) return;
-    connectionStatusShown = true;
-
-    const statusElement = document.getElementById('connection-status');
-    const statusIcon = document.getElementById('status-icon');
-    const statusText = document.getElementById('status-text');
-
-    if (!statusElement || !statusIcon || !statusText) return;
-
-    // Set content based on connection status
-    if (isConnected) {
-      statusElement.className = 'connection-status connected';
-      statusIcon.textContent = '✓';
-      statusText.textContent = 'Connected';
-    } else {
-      statusElement.className = 'connection-status disconnected';
-      statusIcon.textContent = '✕';
-      statusText.textContent = 'Not Connected';
-    }
-
-    // Show the notification
-    statusElement.style.display = 'block';
-    setTimeout(() => {
-      statusElement.classList.add('show');
-    }, 100);
-
-    // Hide after 5 seconds
-    setTimeout(() => {
-      statusElement.classList.remove('show');
-      setTimeout(() => {
-        statusElement.style.display = 'none';
-      }, 500);
-    }, 5000);
-  }
-
   // Admin access variables
   let homeClickCount = 0;
   let homeClickTimer = null;
@@ -333,6 +293,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 10);
     });
 
+
+
     // Prevent any focus highlight
     link.addEventListener('focus', function() {
       this.blur();
@@ -351,8 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Input validation and auto-conversion
   const inputField = document.querySelector('.input-container input');
-  const sendButton = document.querySelector('.input-container .button:not(.change-button)');
-  const changeButton = document.querySelector('.change-button');
+  const sendButton = document.querySelector('.input-container button');
   const inputContainer = document.querySelector('.input-container');
 
   function validateAndConvert(text) {
@@ -434,39 +395,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Change button event listener
-  changeButton.addEventListener('click', function(e) {
-    e.preventDefault();
-
-    // Check if site is locked
-    if (isLocked) {
-      showError();
-      return;
-    }
-
-    const inputValue = inputField.value.trim();
-
-    if (inputValue === '') {
-      showError();
-      return;
-    }
-
-    const validation = validateAndConvert(inputValue);
-
-    if (!validation.isValid) {
-      showError();
-    } else {
-      // Update input field with converted text
-      inputField.value = validation.convertedText;
-
-      // Show success state
-      showSuccess();
-
-      // Change vote
-      changeVote(validation.convertedText);
-    }
-  });
-
   // Admin panel variables
   let isLocked = false;
 
@@ -512,25 +440,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Reset form
       const inputField = document.querySelector('.input-container input');
-      const sendButton = document.querySelector('.input-container .button:not(.change-button)');
-      const changeButton = document.querySelector('.change-button');
+      const sendButton = document.querySelector('.input-container button');
       const inputContainer = document.querySelector('.input-container');
-
+      
       if (inputField) {
         inputField.value = '';
         inputField.disabled = false;
       }
-
+      
       if (sendButton) {
         sendButton.disabled = false;
         sendButton.textContent = 'Send';
       }
-
-      if (changeButton) {
-        changeButton.disabled = true;
-        changeButton.textContent = 'Change';
-      }
-
+      
       if (inputContainer) {
         inputContainer.classList.remove('error', 'success', 'voted');
       }
@@ -663,60 +585,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Function to display full results
-  function displayFullResults() {
-    const fullResultContainer = document.getElementById('admin-full-result-container');
-    const fullResultList = document.getElementById('full-result-list');
-
-    if (fullResultContainer.style.display === 'none' || fullResultContainer.style.display === '') {
-      fullResultContainer.style.display = 'block';
-
-      if (window.firebaseDb && window.firebaseDb.useFirebase) {
-        try {
-          const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
-          window.firebaseDb.onValue(votesRef, (snapshot) => {
-            const votes = snapshot.val() || {};
-            showFullResults(votes, fullResultList);
-          }, { onlyOnce: true });
-        } catch (error) {
-          console.log('Firebase error:', error);
-          const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-          showFullResults(votes, fullResultList);
-        }
-      } else {
-        const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-        showFullResults(votes, fullResultList);
-      }
-    } else {
-      fullResultContainer.style.display = 'none';
-    }
-  }
-
-  // Function to show full results
-  function showFullResults(votes, container) {
-    const sortedVotes = Object.entries(votes)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 10); // Top 10
-
-    container.innerHTML = '';
-
-    if (sortedVotes.length === 0) {
-      container.innerHTML = '<div class="no-data">هیچ رای ثبت نشده</div>';
-      return;
-    }
-
-    sortedVotes.forEach(([username, voteCount], index) => {
-      const item = document.createElement('div');
-      item.className = 'full-result-item';
-      item.innerHTML = `
-        <span class="result-rank">${index + 1}</span>
-        <span class="result-username">${username}</span>
-        <span class="result-votes">${voteCount}</span>
-      `;
-      container.appendChild(item);
-    });
-  }
-
   // Add close button event listener when DOM is ready
   setTimeout(() => {
     const closeBtn = document.querySelector('.admin-close-btn');
@@ -745,20 +613,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (voteBtn && voteContainer) {
       voteBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        if (voteContainer.style.display === 'none' || voteContainer.style.display === '') {
+        if (voteContainer.style.display === 'none') {
           voteContainer.style.display = 'block';
         } else {
           voteContainer.style.display = 'none';
         }
-      });
-    }
-
-    // Add Full Result button event listener
-    const fullResultBtn = document.getElementById('full-result-btn');
-    if (fullResultBtn) {
-      fullResultBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        displayFullResults();
       });
     }
 
@@ -792,17 +651,15 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    // Parse input format: @username+number or @username-number
-    const match = inputValue.match(/^@?([a-zA-Z0-9._]+)([+-])(\d+)$/);
+    // Parse input format: @username+number
+    const match = inputValue.match(/^@?([a-zA-Z0-9._]+)\+(\d+)$/);
     if (!match) {
-      alert('فرمت صحیح: @username+2 یا @username-2');
+      alert('فرمت صحیح: @username+2');
       return;
     }
 
     const username = '@' + match[1].toLowerCase();
-    const operation = match[2];
-    const voteCount = parseInt(match[3]);
-    const isSubtract = operation === '-';
+    const voteCount = parseInt(match[2]);
 
     if (voteCount <= 0) {
       alert('تعداد رای باید عدد مثبت باشد');
@@ -815,15 +672,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
         window.firebaseDb.onValue(votesRef, (snapshot) => {
           const votes = snapshot.val() || {};
-
-          // Add or subtract votes for this user
+          
+          // Add votes for this user
           if (votes[username]) {
-            votes[username] += isSubtract ? -voteCount : voteCount;
-            if (votes[username] < 0) {
-              votes[username] = 0;  // Prevent negative votes
-            }
+            votes[username] += voteCount;
           } else {
-            votes[username] = isSubtract ? 0 : voteCount; // Start from 0 if subtracting
+            votes[username] = voteCount;
           }
 
           // Save back to Firebase
@@ -831,44 +685,41 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(() => {
               console.log('Admin vote submitted successfully');
               adminVoteInput.value = '';
-              alert(`${voteCount} رای برای ${username} ${isSubtract ? 'کم شد' : 'ثبت شد'}`);
+              alert(`${voteCount} رای برای ${username} ثبت شد`);
               updateLeaderboard();
             })
             .catch((error) => {
               console.log('Firebase write error:', error);
-              submitAdminVoteToLocalStorage(username, voteCount, isSubtract);
+              submitAdminVoteToLocalStorage(username, voteCount);
             });
         }, { onlyOnce: true });
       } catch (error) {
         console.log('Firebase error:', error);
-        submitAdminVoteToLocalStorage(username, voteCount, isSubtract);
+        submitAdminVoteToLocalStorage(username, voteCount);
       }
     } else {
-      submitAdminVoteToLocalStorage(username, voteCount, isSubtract);
+      submitAdminVoteToLocalStorage(username, voteCount);
     }
   }
 
   // Submit admin vote to localStorage
-  function submitAdminVoteToLocalStorage(username, voteCount, isSubtract) {
+  function submitAdminVoteToLocalStorage(username, voteCount) {
     const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-
+    
     if (votes[username]) {
-      votes[username] += isSubtract ? -voteCount : voteCount;
-      if (votes[username] < 0) {
-        votes[username] = 0;  // Prevent negative votes
-      }
+      votes[username] += voteCount;
     } else {
-      votes[username] = isSubtract ? 0 : voteCount; // Start from 0 if subtracting
+      votes[username] = voteCount;
     }
 
     localStorage.setItem('votes', JSON.stringify(votes));
-
+    
     const adminVoteInput = document.getElementById('admin-vote-input');
     if (adminVoteInput) {
       adminVoteInput.value = '';
     }
-
-    alert(`${voteCount} رای برای ${username} ${isSubtract ? 'کم شد' : 'ثبت شد'}`);
+    
+    alert(`${voteCount} رای برای ${username} ثبت شد`);
     updateLeaderboard();
   }
 
@@ -887,7 +738,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
         window.firebaseDb.onValue(votesRef, (snapshot) => {
           const votes = snapshot.val() || {};
-
+          
           // Increment vote count for this user
           if (votes[username]) {
             votes[username]++;
@@ -901,7 +752,6 @@ document.addEventListener('DOMContentLoaded', function() {
               console.log('Vote submitted successfully');
               // Mark user as voted
               localStorage.setItem('hasVoted', 'true');
-              localStorage.setItem('votedFor', username);
               markAsVoted();
             })
             .catch((error) => {
@@ -924,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Submit vote to localStorage
   function submitVoteToLocalStorage(username) {
     const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-
+    
     if (votes[username]) {
       votes[username]++;
     } else {
@@ -933,199 +783,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
     localStorage.setItem('votes', JSON.stringify(votes));
     localStorage.setItem('hasVoted', 'true');
-    localStorage.setItem('votedFor', username);
     markAsVoted();
-  }
-
-  // Change vote function
-  function changeVote(newUsername) {
-    const hasChanged = localStorage.getItem('hasChanged') === 'true';
-    if (hasChanged) {
-      showError();
-      return;
-    }
-
-    const oldUsername = localStorage.getItem('votedFor');
-    if (!oldUsername) {
-      showError();
-      return;
-    }
-
-    if (window.firebaseDb && window.firebaseDb.useFirebase) {
-      try {
-        // Get current votes from Firebase
-        const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
-        window.firebaseDb.onValue(votesRef, (snapshot) => {
-          const votes = snapshot.val() || {};
-
-          // Remove vote from old user
-          if (votes[oldUsername] && votes[oldUsername] > 0) {
-            votes[oldUsername]--;
-            if (votes[oldUsername] === 0) {
-              delete votes[oldUsername];
-            }
-          }
-
-          // Add vote to new user
-          if (votes[newUsername]) {
-            votes[newUsername]++;
-          } else {
-            votes[newUsername] = 1;
-          }
-
-          // Save back to Firebase
-          window.firebaseDb.set(votesRef, votes)
-            .then(() => {
-              console.log('Vote changed successfully');
-              localStorage.setItem('votedFor', newUsername);
-              localStorage.setItem('hasChanged', 'true');
-              markAsChanged();
-            })
-            .catch((error) => {
-              console.log('Firebase write error:', error);
-              changeVoteToLocalStorage(oldUsername, newUsername);
-            });
-        }, { onlyOnce: true });
-      } catch (error) {
-        console.log('Firebase error:', error);
-        changeVoteToLocalStorage(oldUsername, newUsername);
-      }
-    } else {
-      changeVoteToLocalStorage(oldUsername, newUsername);
-    }
-  }
-
-  // Change vote to localStorage
-  function changeVoteToLocalStorage(oldUsername, newUsername) {
-    const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-
-    // Remove vote from old user
-    if (votes[oldUsername] && votes[oldUsername] > 0) {
-      votes[oldUsername]--;
-      if (votes[oldUsername] === 0) {
-        delete votes[oldUsername];
-      }
-    }
-
-    // Add vote to new user
-    if (votes[newUsername]) {
-      votes[newUsername]++;
-    } else {
-      votes[newUsername] = 1;
-    }
-
-    localStorage.setItem('votes', JSON.stringify(votes));
-    localStorage.setItem('votedFor', newUsername);
-    localStorage.setItem('hasChanged', 'true');
-    markAsChanged();
-  }
-
-  // Mark as changed
-  function markAsChanged() {
-    const inputContainer = document.querySelector('.input-container');
-    const inputField = document.querySelector('.input-container input');
-    const changeButton = document.querySelector('.change-button');
-
-    // Remove previous states
-    inputContainer.classList.remove('error', 'voted');
-    inputContainer.classList.add('success');
-
-    inputField.disabled = true;
-    changeButton.disabled = true;
-    changeButton.textContent = 'Changed ✓';
-
-    // Clear input
-    inputField.value = '';
   }
 
   // Mark input as voted
   function markAsVoted() {
     const inputContainer = document.querySelector('.input-container');
     const inputField = document.querySelector('.input-container input');
-    const sendButton = document.querySelector('.input-container .button:not(.change-button)');
-    const changeButton = document.querySelector('.change-button');
+    const sendButton = document.querySelector('.input-container button');
 
-    // Remove previous states and add success state
-    inputContainer.classList.remove('error');
-    inputContainer.classList.add('success');
-
-    // Don't disable input field so user can use change button
-    inputField.disabled = false;
+    inputContainer.classList.add('voted');
+    inputField.disabled = true;
     sendButton.disabled = true;
     sendButton.textContent = 'Voted ✓';
-
-    // Enable change button
-    changeButton.disabled = false;
-
+    
     // Clear input
     inputField.value = '';
-
-    // After 3 seconds, change to voted state
-    setTimeout(() => {
-      inputContainer.classList.remove('success');
-      inputContainer.classList.add('voted');
-    }, 3000);
   }
 
   // Update leaderboard function
-function updateLeaderboard() {
-  const leaderboardBody = document.getElementById('leaderboard-body');
-  if (!leaderboardBody) return;
-
-  // Clear old entries
-  leaderboardBody.innerHTML = '';
-
-  // خواندن از Firebase یا LocalStorage
-  if (window.firebaseDb && window.firebaseDb.useFirebase) {
-    try {
-      const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
-      window.firebaseDb.onValue(votesRef, (snapshot) => {
-        const votes = snapshot.val() || {};
-        renderLeaderboard(votes);
-      }, (error) => {
-        console.error('Firebase read error:', error);
+  function updateLeaderboard() {
+    if (window.firebaseDb && window.firebaseDb.useFirebase) {
+      try {
+        const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
+        window.firebaseDb.onValue(votesRef, (snapshot) => {
+          const votes = snapshot.val() || {};
+          displayLeaderboard(votes);
+        }, { onlyOnce: true });
+      } catch (error) {
+        console.log('Firebase error:', error);
+        // Fallback to localStorage
         const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-        renderLeaderboard(votes);
-      });
-    } catch (error) {
-      console.error('Firebase error:', error);
+        displayLeaderboard(votes);
+      }
+    } else {
+      // Use localStorage
       const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-      renderLeaderboard(votes);
+      displayLeaderboard(votes);
     }
-  } else {
-    const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-    renderLeaderboard(votes);
   }
-}
-
-function renderLeaderboard(votes) {
-  const leaderboardBody = document.getElementById('leaderboard-body');
-  if (!leaderboardBody) return;
-
-  const sorted = Object.entries(votes)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 10); // Top 10
-
-  if (sorted.length === 0) {
-    leaderboardBody.innerHTML = `<tr><td colspan="3">هنوز رأیی ثبت نشده</td></tr>`;
-    return;
-  }
-
-  sorted.forEach(([username, count], index) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${index + 1}</td>
-      <td>${username}</td>
-      <td>${count}</td>
-    `;
-    leaderboardBody.appendChild(row);
-  });
-}
 
   // Display leaderboard
   function displayLeaderboard(votes) {
     const leaderboardBody = document.getElementById('leaderboard-body');
-
+    
     if (!leaderboardBody) {
       console.log('Leaderboard body not found');
       return;
@@ -1158,7 +859,7 @@ function renderLeaderboard(votes) {
       const rank = index + 1;
       const row = document.createElement('tr');
       row.className = `rank-${rank}`;
-
+      
       let medalHtml = '';
       if (rank <= 3) {
         medalHtml = `<span class="rank-medal">${rank}</span>`;
@@ -1169,7 +870,7 @@ function renderLeaderboard(votes) {
         <td>${username}</td>
         <td>${voteCount}</td>
       `;
-
+      
       leaderboardBody.appendChild(row);
     });
 
@@ -1185,19 +886,14 @@ function renderLeaderboard(votes) {
         leaderboardBody.appendChild(row);
       }
     }
-  }
+
+    }
 
   // Initialize vote state
   function initializeVoteState() {
     const hasVoted = localStorage.getItem('hasVoted') === 'true';
-    const hasChanged = localStorage.getItem('hasChanged') === 'true';
-
     if (hasVoted) {
       markAsVoted();
-    }
-
-    if (hasChanged) {
-      markAsChanged();
     }
   }
 
@@ -1208,5 +904,4 @@ function renderLeaderboard(votes) {
   window.updateLeaderboard = updateLeaderboard;
   window.submitAdminVote = submitAdminVote;
   window.submitAdminVoteToLocalStorage = submitAdminVoteToLocalStorage;
-  window.showConnectionStatus = showConnectionStatus;
 });
