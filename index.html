@@ -67,8 +67,11 @@
     <div class="content vote-content">
       <!-- From Uiverse.io by Smit-Prajapati --> 
       <div class="input-container">
-        <input type="text" placeholder="@Username">
-        <button class="button">Send</button>
+        <div class="input-row">
+          <input type="text" placeholder="@Username">
+          <button class="button">Send</button>
+        </div>
+        <button class="button change-button" disabled>Change</button>
       </div>
     </div>
   </div>
@@ -109,17 +112,32 @@
           <button class="admin-btn" id="reset-btn">Reset</button>
           <button class="admin-btn" id="lock-btn">Lock ❌</button>
           <button class="admin-btn" id="vote-btn">Vote</button>
+          <button class="admin-btn" id="full-result-btn">Full Result</button>
         </div>
         <div class="admin-vote-container" id="admin-vote-container" style="display: none;">
           <div class="admin-vote-field">
-            <input type="text" id="admin-vote-input" placeholder="@username+2" />
+            <input type="text" id="admin-vote-input" placeholder="@username+2 or @username-3" />
             <button class="admin-vote-submit" id="admin-vote-submit">Add Vote</button>
+          </div>
+        </div>
+        <div class="admin-full-result-container" id="admin-full-result-container" style="display: none;">
+          <h3>Top 10 Results</h3>
+          <div class="full-result-list" id="full-result-list">
+            <!-- Full results will be populated here -->
           </div>
         </div>
       </div>
     </div>
   </div>
   
+  <!-- Connection Status Notification -->
+  <div class="connection-status" id="connection-status" style="display: none;">
+    <div class="status-content">
+      <span class="status-icon" id="status-icon"></span>
+      <span class="status-text" id="status-text"></span>
+    </div>
+  </div>
+
   <div class="menu-container">
     <nav class="navMenu">
       <a href="#" data-page="vote">Vote</a>
@@ -148,17 +166,58 @@
     let app, database;
     let useFirebase = false;
     
-    try {
-      if (firebaseConfig.apiKey) {
-        app = initializeApp(firebaseConfig);
-        database = getDatabase(app);
-        useFirebase = true;
-        console.log('Firebase connected successfully');
+    // Test Firebase connection
+    async function testFirebaseConnection() {
+      try {
+        if (firebaseConfig.apiKey) {
+          app = initializeApp(firebaseConfig);
+          database = getDatabase(app);
+          
+          // Test actual connection by trying to read from Firebase
+          const testRef = ref(database, 'connectionTest');
+          const testPromise = new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Connection timeout'));
+            }, 5000); // 5 second timeout
+            
+            onValue(testRef, (snapshot) => {
+              clearTimeout(timeout);
+              resolve(true);
+            }, (error) => {
+              clearTimeout(timeout);
+              reject(error);
+            });
+          });
+          
+          await testPromise;
+          useFirebase = true;
+          console.log('Firebase connected successfully');
+          
+          // Show connection status after a short delay
+          setTimeout(() => {
+            if (window.showConnectionStatus) {
+              window.showConnectionStatus(true);
+            }
+          }, 1000);
+          
+        } else {
+          throw new Error('No API key provided');
+        }
+      } catch (error) {
+        console.log('Firebase connection failed:', error);
+        useFirebase = false;
+        
+        // Show disconnection status after a short delay
+        setTimeout(() => {
+          if (window.showConnectionStatus) {
+            window.showConnectionStatus(false);
+          }
+        }, 1000);
       }
-    } catch (error) {
-      console.log('Firebase not configured, using localStorage');
-      useFirebase = false;
     }
+    
+    // Test connection
+    testFirebaseConnection();
     
     // Make Firebase functions globally available
     window.firebaseDb = {
