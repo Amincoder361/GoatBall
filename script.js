@@ -351,8 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Input validation and auto-conversion
   const inputField = document.querySelector('.input-container input');
-  const sendButton = document.querySelector('.input-container .button:not(.change-button)');
-  const changeButton = document.querySelector('.change-button');
+  const sendButton = document.querySelector('.input-container .button');
   const inputContainer = document.querySelector('.input-container');
 
   function validateAndConvert(text) {
@@ -437,39 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Change button event listener
-  changeButton.addEventListener('click', function(e) {
-    e.preventDefault();
-
-    // Check if site is locked
-    if (isLocked) {
-      showError();
-      return;
-    }
-
-    const inputValue = inputField.value.trim();
-
-    if (inputValue === '') {
-      showError();
-      return;
-    }
-
-    const validation = validateAndConvert(inputValue);
-
-    if (!validation.isValid) {
-      showError();
-    } else {
-      // Update input field with converted text
-      inputField.value = validation.convertedText;
-
-      // Show success state
-      showSuccess();
-
-      // Change vote
-      changeVote(validation.convertedText);
-    }
-  });
-
   // Admin panel variables
   let isLocked = false;
 
@@ -515,8 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Reset form
       const inputField = document.querySelector('.input-container input');
-      const sendButton = document.querySelector('.input-container .button:not(.change-button)');
-      const changeButton = document.querySelector('.change-button');
+      const sendButton = document.querySelector('.input-container .button');
       const inputContainer = document.querySelector('.input-container');
 
       if (inputField) {
@@ -527,11 +492,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (sendButton) {
         sendButton.disabled = false;
         sendButton.textContent = 'Send';
-      }
-
-      if (changeButton) {
-        changeButton.disabled = true;
-        changeButton.textContent = 'Change';
       }
 
       if (inputContainer) {
@@ -715,10 +675,10 @@ document.addEventListener('DOMContentLoaded', function() {
     sortedVotes.forEach(([username, voteCount], index) => {
       const item = document.createElement('div');
       item.className = 'full-result-item';
-      
+
       // Convert username for display (replace * with .)
       const displayUsername = convertDisplayName(username);
-      
+
       item.innerHTML = `
         <span class="result-rank">${index + 1}</span>
         <span class="result-username">${displayUsername}</span>
@@ -819,6 +779,15 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
+    // Add Timer button event listener
+    const timerBtn = document.getElementById('timer-btn');
+    if (timerBtn) {
+      timerBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        showTimerSettings();
+      });
+    }
+
     // Add admin vote submit functionality
     const adminVoteSubmit = document.getElementById('admin-vote-submit');
     const adminVoteInput = document.getElementById('admin-vote-input');
@@ -851,8 +820,63 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
+    // Add timer settings overlay event listeners
+    const timerSettingsCloseBtn = document.getElementById('timer-settings-close-btn');
+    const timerSettingsOverlay = document.getElementById('timer-settings-overlay');
+
+    if (timerSettingsCloseBtn) {
+      timerSettingsCloseBtn.addEventListener('click', closeTimerSettings);
+    }
+
+    if (timerSettingsOverlay) {
+      timerSettingsOverlay.addEventListener('click', function(e) {
+        if (e.target === timerSettingsOverlay) {
+          closeTimerSettings();
+        }
+      });
+    }
+
+    // Add timer confirmation overlay event listeners
+    const timerConfirmationCloseBtn = document.getElementById('timer-confirmation-close-btn');
+    const timerConfirmationOkBtn = document.getElementById('timer-confirmation-ok-btn');
+    const timerConfirmationOverlay = document.getElementById('timer-confirmation-overlay');
+
+    if (timerConfirmationCloseBtn) {
+      timerConfirmationCloseBtn.addEventListener('click', closeTimerConfirmation);
+    }
+
+    if (timerConfirmationOkBtn) {
+      timerConfirmationOkBtn.addEventListener('click', closeTimerConfirmation);
+    }
+
+    if (timerConfirmationOverlay) {
+      timerConfirmationOverlay.addEventListener('click', function(e) {
+        if (e.target === timerConfirmationOverlay) {
+          closeTimerConfirmation();
+        }
+      });
+    }
+
     // Initialize lock state
     initializeLockState();
+
+    // Add timer submit functionality
+    const timerSubmitBtn = document.getElementById('admin-timer-submit');
+    const timerStopBtn = document.getElementById('admin-timer-stop');
+    if (timerSubmitBtn && timerStopBtn) {
+      timerSubmitBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        setTimer();
+      });
+
+      timerStopBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        stopTimer();
+      });
+    }
+
+    // Initialize timer system
+    initializeTimer();
   }, 100);
 
   // Admin vote submission function
@@ -1012,125 +1036,22 @@ document.addEventListener('DOMContentLoaded', function() {
     markAsVoted();
   }
 
-  // Change vote function
-  function changeVote(newUsername) {
-    const hasChanged = localStorage.getItem('hasChanged') === 'true';
-    if (hasChanged) {
-      showError();
-      return;
-    }
-
-    const oldUsername = localStorage.getItem('votedFor');
-    if (!oldUsername) {
-      showError();
-      return;
-    }
-
-    if (window.firebaseDb && window.firebaseDb.useFirebase) {
-      try {
-        // Get current votes from Firebase
-        const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
-        window.firebaseDb.onValue(votesRef, (snapshot) => {
-          const votes = snapshot.val() || {};
-
-          // Remove vote from old user
-          if (votes[oldUsername] && votes[oldUsername] > 0) {
-            votes[oldUsername]--;
-            if (votes[oldUsername] === 0) {
-              delete votes[oldUsername];
-            }
-          }
-
-          // Add vote to new user
-          if (votes[newUsername]) {
-            votes[newUsername]++;
-          } else {
-            votes[newUsername] = 1;
-          }
-
-          // Save back to Firebase
-          window.firebaseDb.set(votesRef, votes)
-            .then(() => {
-              console.log('Vote changed successfully');
-              localStorage.setItem('votedFor', newUsername);
-              localStorage.setItem('hasChanged', 'true');
-              markAsChanged();
-            })
-            .catch((error) => {
-              console.log('Firebase write error:', error);
-              changeVoteToLocalStorage(oldUsername, newUsername);
-            });
-        }, { onlyOnce: true });
-      } catch (error) {
-        console.log('Firebase error:', error);
-        changeVoteToLocalStorage(oldUsername, newUsername);
-      }
-    } else {
-      changeVoteToLocalStorage(oldUsername, newUsername);
-    }
-  }
-
-  // Change vote to localStorage
-  function changeVoteToLocalStorage(oldUsername, newUsername) {
-    const votes = JSON.parse(localStorage.getItem('votes') || '{}');
-
-    // Remove vote from old user
-    if (votes[oldUsername] && votes[oldUsername] > 0) {
-      votes[oldUsername]--;
-      if (votes[oldUsername] === 0) {
-        delete votes[oldUsername];
-      }
-    }
-
-    // Add vote to new user
-    if (votes[newUsername]) {
-      votes[newUsername]++;
-    } else {
-      votes[newUsername] = 1;
-    }
-
-    localStorage.setItem('votes', JSON.stringify(votes));
-    localStorage.setItem('votedFor', newUsername);
-    localStorage.setItem('hasChanged', 'true');
-    markAsChanged();
-  }
-
-  // Mark as changed
-  function markAsChanged() {
-    const inputContainer = document.querySelector('.input-container');
-    const inputField = document.querySelector('.input-container input');
-    const changeButton = document.querySelector('.change-button');
-
-    // Remove previous states
-    inputContainer.classList.remove('error', 'voted');
-    inputContainer.classList.add('success');
-
-    inputField.disabled = true;
-    changeButton.disabled = true;
-    changeButton.textContent = 'Changed ✓';
-
-    // Clear input
-    inputField.value = '';
-  }
+  
 
   // Mark input as voted
   function markAsVoted() {
     const inputContainer = document.querySelector('.input-container');
     const inputField = document.querySelector('.input-container input');
-    const sendButton = document.querySelector('.input-container .button:not(.change-button)');
-    const changeButton = document.querySelector('.change-button');
+    const sendButton = document.querySelector('.input-container .button');
 
     // Remove previous states and add success state
     inputContainer.classList.remove('error');
     inputContainer.classList.add('success');
 
-    // Don't disable input field so user can use change button
-    inputField.disabled = false;
+    // Disable input field and send button
+    inputField.disabled = true;
     sendButton.disabled = true;
     sendButton.textContent = 'Voted ✓';
-
-    // Enable change button
-    changeButton.disabled = false;
 
     // Clear input
     inputField.value = '';
@@ -1240,14 +1161,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize vote state
   function initializeVoteState() {
     const hasVoted = localStorage.getItem('hasVoted') === 'true';
-    const hasChanged = localStorage.getItem('hasChanged') === 'true';
 
     if (hasVoted) {
       markAsVoted();
-    }
-
-    if (hasChanged) {
-      markAsChanged();
     }
   }
 
@@ -1262,9 +1178,306 @@ document.addEventListener('DOMContentLoaded', function() {
     updateLeaderboard();
   }, 3000); // Wait for Firebase connection
 
+  // Timer System Variables
+  let countdownInterval = null;
+  let timerEndTime = null;
+
+  // Timer Functions
+  function setTimer() {
+    const dateInput = document.getElementById('timer-date');
+    const timeInput = document.getElementById('timer-time');
+
+    if (!dateInput.value || !timeInput.value) {
+      alert('لطفاً تاریخ و ساعت را کامل وارد کنید');
+      return;
+    }
+
+    // Create target date
+    const targetDateTime = new Date(`${dateInput.value}T${timeInput.value}:00`);
+    const now = new Date();
+
+    if (targetDateTime <= now) {
+      alert('تاریخ و ساعت انتخاب شده باید در آینده باشد');
+      return;
+    }
+
+    timerEndTime = targetDateTime.getTime();
+
+    // Save to Firebase or localStorage
+    if (window.firebaseDb && window.firebaseDb.useFirebase) {
+      try {
+        const timerRef = window.firebaseDb.ref(window.firebaseDb.database, 'contestTimer');
+        window.firebaseDb.set(timerRef, {
+          endTime: timerEndTime,
+          active: true
+        })
+        .then(() => {
+          console.log('Timer saved to Firebase');
+          closeTimerSettings();
+          startCountdown();
+          showTimerConfirmation(dateInput.value, timeInput.value);
+        })
+        .catch((error) => {
+          console.log('Firebase timer save error:', error);
+          saveTimerToLocalStorage();
+        });
+      } catch (error) {
+        console.log('Firebase timer error:', error);
+        saveTimerToLocalStorage();
+      }
+    } else {
+      saveTimerToLocalStorage();
+    }
+
+    function saveTimerToLocalStorage() {
+      localStorage.setItem('contestTimer', JSON.stringify({
+        endTime: timerEndTime,
+        active: true
+      }));
+      closeTimerSettings();
+      startCountdown();
+      showTimerConfirmation(dateInput.value, timeInput.value);
+    }
+  }
+
+  // Show timer confirmation overlay
+  function showTimerConfirmation(date, time) {
+    const overlay = document.getElementById('timer-confirmation-overlay');
+    const detailsContainer = document.getElementById('timer-confirmation-details');
+
+    if (overlay && detailsContainer) {
+      // Format the details
+      const formattedDate = new Date(date).toLocaleDateString('fa-IR');
+      const formattedTime = time;
+
+      detailsContainer.innerHTML = `
+        <div>تاریخ پایان: ${formattedDate}</div>
+        <div>ساعت پایان: ${formattedTime}</div>
+      `;
+
+      overlay.classList.add('show');
+    }
+  }
+
+  // Show timer settings overlay
+  function showTimerSettings() {
+    const overlay = document.getElementById('timer-settings-overlay');
+    if (overlay) {
+      overlay.classList.add('show');
+    }
+  }
+
+  // Close timer settings overlay
+  function closeTimerSettings() {
+    const overlay = document.getElementById('timer-settings-overlay');
+    if (overlay) {
+      overlay.classList.remove('show');
+    }
+  }
+
+  // Close timer confirmation overlay
+  function closeTimerConfirmation() {
+    const overlay = document.getElementById('timer-confirmation-overlay');
+    if (overlay) {
+      overlay.classList.remove('show');
+    }
+  }
+
+  function stopTimer() {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+
+    timerEndTime = null;
+
+    // Save to Firebase or localStorage
+    if (window.firebaseDb && window.firebaseDb.useFirebase) {
+      try {
+        const timerRef = window.firebaseDb.ref(window.firebaseDb.database, 'contestTimer');
+        window.firebaseDb.set(timerRef, {
+          endTime: null,
+          active: false
+        })
+        .then(() => {
+          console.log('Timer stopped in Firebase');
+          hideCountdown();
+          alert('تایمر متوقف شد');
+        })
+        .catch((error) => {
+          console.log('Firebase timer stop error:', error);
+          stopTimerInLocalStorage();
+        });
+      } catch (error) {
+        console.log('Firebase timer error:', error);
+        stopTimerInLocalStorage();
+      }
+    } else {
+      stopTimerInLocalStorage();
+    }
+
+    function stopTimerInLocalStorage() {
+      localStorage.setItem('contestTimer', JSON.stringify({
+        endTime: null,
+        active: false
+      }));
+      hideCountdown();
+      alert('تایمر متوقف شد');
+    }
+  }
+
+  function startCountdown() {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
+
+    showCountdown();
+
+    countdownInterval = setInterval(function() {
+      const now = new Date().getTime();
+      const timeLeft = timerEndTime - now;
+
+      if (timeLeft <= 0) {
+        // Timer finished
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        hideCountdown();
+
+        // Auto-lock the site
+        setLockState(true);
+        alert('مسابقه به پایان رسید! سایت به طور خودکار قفل شد.');
+
+        // Update timer status
+        if (window.firebaseDb && window.firebaseDb.useFirebase) {
+          try {
+            const timerRef = window.firebaseDb.ref(window.firebaseDb.database, 'contestTimer');
+            window.firebaseDb.set(timerRef, {
+              endTime: null,
+              active: false
+            });
+          } catch (error) {
+            console.log('Firebase timer finish error:', error);
+          }
+        } else {
+          localStorage.setItem('contestTimer', JSON.stringify({
+            endTime: null,
+            active: false
+          }));
+        }
+
+        return;
+      }
+
+      // Calculate time units
+      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+      // Update display
+      updateCountdownDisplay(days, hours, minutes, seconds);
+    }, 1000);
+  }
+
+  function updateCountdownDisplay(days, hours, minutes, seconds) {
+    const daysElement = document.getElementById('days-value');
+    const hoursElement = document.getElementById('hours-value');
+    const minutesElement = document.getElementById('minutes-value');
+    const secondsElement = document.getElementById('seconds-value');
+
+    if (daysElement) daysElement.textContent = String(days).padStart(2, '0');
+    if (hoursElement) hoursElement.textContent = String(hours).padStart(2, '0');
+    if (minutesElement) minutesElement.textContent = String(minutes).padStart(2, '0');
+    if (secondsElement) secondsElement.textContent = String(seconds).padStart(2, '0');
+  }
+
+  function showCountdown() {
+    const countdownContainer = document.getElementById('countdown-container');
+    if (countdownContainer) {
+      countdownContainer.style.display = 'block';
+    }
+  }
+
+  function hideCountdown() {
+    const countdownContainer = document.getElementById('countdown-container');
+    if (countdownContainer) {
+      countdownContainer.style.display = 'none';
+    }
+
+    // Reset display
+    updateCountdownDisplay(0, 0, 0, 0);
+  }
+
+  // Initialize timer system
+  function initializeTimer() {
+    // Wait for Firebase to be ready, then load timer
+    setTimeout(() => {
+      if (window.firebaseDb && window.firebaseDb.useFirebase) {
+        try {
+          const timerRef = window.firebaseDb.ref(window.firebaseDb.database, 'contestTimer');
+          window.firebaseDb.onValue(timerRef, (snapshot) => {
+            const timerData = snapshot.val();
+            console.log('Timer data received from Firebase:', timerData);
+            if (timerData && timerData.active && timerData.endTime) {
+              const now = new Date().getTime();
+              if (timerData.endTime > now) {
+                timerEndTime = timerData.endTime;
+                startCountdown();
+                console.log('Timer started from Firebase');
+              } else {
+                // Timer expired, clean up
+                window.firebaseDb.set(timerRef, {
+                  endTime: null,
+                  active: false
+                });
+                hideCountdown();
+              }
+            } else {
+              hideCountdown();
+            }
+          }, (error) => {
+            console.log('Firebase timer read error:', error);
+            initializeTimerFromLocalStorage();
+          });
+        } catch (error) {
+          console.log('Firebase timer init error:', error);
+          initializeTimerFromLocalStorage();
+        }
+      } else {
+        console.log('Firebase not available for timer, using localStorage');
+        initializeTimerFromLocalStorage();
+      }
+    }, 2000); // Wait 2 seconds for Firebase to connect
+
+    function initializeTimerFromLocalStorage() {
+      const timerData = JSON.parse(localStorage.getItem('contestTimer') || '{}');
+      if (timerData.active && timerData.endTime) {
+        const now = new Date().getTime();
+        if (timerData.endTime > now) {
+          timerEndTime = timerData.endTime;
+          startCountdown();
+        } else {
+          // Timer expired, clean up
+          localStorage.setItem('contestTimer', JSON.stringify({
+            endTime: null,
+            active: false
+          }));
+          hideCountdown();
+        }
+      } else {
+        hideCountdown();
+      }
+    }
+  }
+
   // Make functions globally available
   window.updateLeaderboard = updateLeaderboard;
   window.submitAdminVote = submitAdminVote;
   window.submitAdminVoteToLocalStorage = submitAdminVoteToLocalStorage;
   window.showConnectionStatus = showConnectionStatus;
+  window.setTimer = setTimer;
+  window.stopTimer = stopTimer;
+  window.initializeTimer = initializeTimer;
+  window.showTimerConfirmation = showTimerConfirmation;
+  window.closeTimerConfirmation = closeTimerConfirmation;
 });

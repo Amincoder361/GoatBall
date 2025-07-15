@@ -25,6 +25,27 @@
             allowfullscreen>
           </iframe>
         </div>
+        <div class="countdown-container" id="countdown-container" style="display: none;">
+          <h3 class="countdown-title">زمان باقی مانده تا پایان مسابقه</h3>
+          <div class="countdown-display">
+            <div class="time-unit">
+              <span class="time-value" id="days-value">00</span>
+              <span class="time-label">روز</span>
+            </div>
+            <div class="time-unit">
+              <span class="time-value" id="hours-value">00</span>
+              <span class="time-label">ساعت</span>
+            </div>
+            <div class="time-unit">
+              <span class="time-value" id="minutes-value">00</span>
+              <span class="time-label">دقیقه</span>
+            </div>
+            <div class="time-unit">
+              <span class="time-value" id="seconds-value">00</span>
+              <span class="time-label">ثانیه</span>
+            </div>
+          </div>
+        </div>
         <div class="social-buttons">
           <!-- From Uiverse.io by sarra-thabet --> 
           <button class="social-btn instagram-btn" onclick="window.open('https://Instagram.com/TheTopRange', '_blank')">
@@ -72,7 +93,10 @@
           <input type="text" placeholder="@Username">
           <button class="button">Send</button>
         </div>
-        <button class="button change-button" disabled>Change</button>
+        
+        <div class="vote-instruction">
+          آیدی شخصی که می‌خواهید به او رای بدهید را در بخش بالا وارد کنید و دکمه ارسال رو بزنید.
+        </div>
       </div>
     </div>
   </div>
@@ -114,6 +138,7 @@
           <button class="admin-btn" id="lock-btn">Lock ❌</button>
           <button class="admin-btn" id="vote-btn">Vote</button>
           <button class="admin-btn" id="full-result-btn">Full Result</button>
+          <button class="admin-btn" id="timer-btn">Timer</button>
         </div>
         <div class="admin-vote-container" id="admin-vote-container" style="display: none;">
           <div class="admin-vote-field">
@@ -127,6 +152,7 @@
             <!-- Full results will be populated here -->
           </div>
         </div>
+        
       </div>
     </div>
   </div>
@@ -136,6 +162,50 @@
     <div class="status-content">
       <span class="status-icon" id="status-icon"></span>
       <span class="status-text" id="status-text"></span>
+    </div>
+  </div>
+
+  <!-- Timer Settings Overlay -->
+  <div class="timer-settings-overlay" id="timer-settings-overlay">
+    <div class="timer-settings-container">
+      <div class="timer-settings-header">
+        <h2>تنظیم تایمر مسابقه</h2>
+        <button class="timer-settings-close-btn" id="timer-settings-close-btn">✕</button>
+      </div>
+      <div class="timer-settings-content">
+        <div class="timer-settings-form">
+          <div class="timer-input-group">
+            <label>تاریخ (YYYY-MM-DD):</label>
+            <input type="date" id="timer-date" />
+          </div>
+          <div class="timer-input-group">
+            <label>ساعت (HH:MM):</label>
+            <input type="time" id="timer-time" />
+          </div>
+          <div class="timer-actions">
+            <button class="admin-timer-submit" id="admin-timer-submit">شروع تایمر</button>
+            <button class="admin-timer-stop" id="admin-timer-stop">توقف تایمر</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timer Confirmation Overlay -->
+  <div class="timer-confirmation-overlay" id="timer-confirmation-overlay">
+    <div class="timer-confirmation-container">
+      <div class="timer-confirmation-header">
+        <h3>تایمر تنظیم شد</h3>
+        <button class="timer-confirmation-close-btn" id="timer-confirmation-close-btn">✕</button>
+      </div>
+      <div class="timer-confirmation-content">
+        <div class="timer-confirmation-icon">⏰</div>
+        <p>تایمر مسابقه با موفقیت تنظیم شد</p>
+        <div class="timer-confirmation-details" id="timer-confirmation-details">
+          <!-- Timer details will be shown here -->
+        </div>
+        <button class="timer-confirmation-ok-btn" id="timer-confirmation-ok-btn">باشه</button>
+      </div>
     </div>
   </div>
 
