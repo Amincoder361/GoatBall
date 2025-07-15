@@ -1296,3 +1296,11 @@ body {
     width: 20%;
   }
 }
+.vote-title {
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  color: #FFD43B;
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: "Anton", sans-serif;
+  letter-spacing: 2px;
+}
