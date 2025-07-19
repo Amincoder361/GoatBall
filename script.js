@@ -2,6 +2,191 @@ document.addEventListener('DOMContentLoaded', function() {
   const menuLinks = document.querySelectorAll('.navMenu a');
   const pages = document.querySelectorAll('.page');
 
+  // Dynamic Theme System
+  const themes = {
+    purplePink: {
+      primary: '#9932CC',      // Purple
+      secondary: '#FF69B4',    // Hot Pink
+      gradient: 'linear-gradient(135deg, #9932CC 0%, #FF69B4 100%)',
+      hover: 'linear-gradient(135deg, #BA55D3 0%, #FF1493 100%)',
+      border: '#9932CC',
+      glow: 'rgba(153, 50, 204, 0.5)'
+    },
+    blueGreen: {
+      primary: '#00CED1',      // Dark Turquoise
+      secondary: '#20B2AA',    // Light Sea Green
+      gradient: 'linear-gradient(135deg, #00CED1 0%, #20B2AA 100%)',
+      hover: 'linear-gradient(135deg, #48D1CC 0%, #008B8B 100%)',
+      border: '#00CED1',
+      glow: 'rgba(0, 206, 209, 0.5)'
+    },
+    yellowGold: {
+      primary: '#FFD700',      // Gold
+      secondary: '#FFA500',    // Orange
+      gradient: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+      hover: 'linear-gradient(135deg, #FFFF00 0%, #FF8C00 100%)',
+      border: '#FFD700',
+      glow: 'rgba(255, 215, 0, 0.5)'
+    },
+    redOrange: {
+      primary: '#FF4500',      // Orange Red
+      secondary: '#FF6347',    // Tomato
+      gradient: 'linear-gradient(135deg, #FF4500 0%, #FF6347 100%)',
+      hover: 'linear-gradient(135deg, #FF0000 0%, #FF7F50 100%)',
+      border: '#FF4500',
+      glow: 'rgba(255, 69, 0, 0.5)'
+    }
+  };
+
+  // Select random theme
+  const themeNames = Object.keys(themes);
+  const randomTheme = themes[themeNames[Math.floor(Math.random() * themeNames.length)]];
+
+  // Apply theme to CSS variables
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    root.style.setProperty('--theme-primary', theme.primary);
+    root.style.setProperty('--theme-secondary', theme.secondary);
+    root.style.setProperty('--theme-gradient', theme.gradient);
+    root.style.setProperty('--theme-hover', theme.hover);
+    root.style.setProperty('--theme-border', theme.border);
+    root.style.setProperty('--theme-glow', theme.glow);
+
+    // Apply to existing elements immediately
+    updateElementStyles(theme);
+  }
+
+  // Update all themed elements
+  function updateElementStyles(theme) {
+    // Vote button
+    const voteButton = document.querySelector('.input-container button');
+    if (voteButton) {
+      voteButton.style.background = theme.gradient;
+      voteButton.style.boxShadow = `0px 0px 1px ${theme.glow}, 0px 0px 1px ${theme.glow}`;
+    }
+
+    // Vote button hover effect
+    if (voteButton) {
+      voteButton.addEventListener('mouseenter', function() {
+        this.style.background = theme.hover;
+        this.style.boxShadow = `0px 0px 100px ${theme.glow}, 0px 0px 100px ${theme.glow}`;
+      });
+      voteButton.addEventListener('mouseleave', function() {
+        this.style.background = theme.gradient;
+        this.style.boxShadow = `0px 0px 1px ${theme.glow}, 0px 0px 1px ${theme.glow}`;
+      });
+    }
+
+    // Vote input focus
+    const voteInput = document.querySelector('.input-container input');
+    if (voteInput) {
+      voteInput.addEventListener('focus', function() {
+        this.style.border = `1px solid ${theme.primary}`;
+        this.style.boxShadow = `inset 0px 0px 10px ${theme.glow}, inset 0px 0px 10px ${theme.glow}, 0px 0px 100px ${theme.glow}, 0px 0px 100px ${theme.glow}`;
+      });
+    }
+
+    // Ribbons
+    const ribbons = document.querySelectorAll('.ribbon, .fullscreen-results-ribbon');
+    ribbons.forEach(ribbon => {
+      ribbon.style.background = `linear-gradient(90deg, ${theme.primary} 0%, ${theme.secondary} 50%, ${theme.primary} 100%)`;
+    });
+
+    // Table headers
+    const tableHeaders = document.querySelectorAll('#leaderboard thead, .fullscreen-results-table thead');
+    tableHeaders.forEach(header => {
+      header.style.background = theme.gradient;
+    });
+
+    // Countdown timer border and labels
+    const timeUnits = document.querySelectorAll('.time-unit');
+    timeUnits.forEach(unit => {
+      unit.style.border = `1px solid ${theme.primary}`;
+    });
+
+    const timeLabels = document.querySelectorAll('.time-label');
+    timeLabels.forEach(label => {
+      label.style.color = theme.primary;
+    });
+
+    // Countdown title
+    const countdownTitle = document.querySelector('.countdown-title');
+    if (countdownTitle) {
+      countdownTitle.style.color = theme.primary;
+    }
+
+    // Countdown container border
+    const countdownContainer = document.querySelector('.countdown-container');
+    if (countdownContainer) {
+      countdownContainer.style.border = `2px solid ${theme.primary}`;
+      countdownContainer.style.boxShadow = `0 8px 25px ${theme.glow}`;
+    }
+
+    // Admin timer buttons
+    const timerButtons = document.querySelectorAll('.admin-timer-submit, .admin-vote-submit-btn, .timer-confirmation-ok-btn');
+    timerButtons.forEach(btn => {
+      if (!btn.classList.contains('admin-timer-stop')) {
+        btn.style.background = theme.gradient;
+        btn.addEventListener('mouseenter', function() {
+          this.style.background = theme.hover;
+        });
+        btn.addEventListener('mouseleave', function() {
+          this.style.background = theme.gradient;
+        });
+      }
+    });
+
+    // Admin vote submit button
+    const adminVoteSubmit = document.querySelector('.admin-vote-submit');
+    if (adminVoteSubmit) {
+      adminVoteSubmit.style.background = theme.gradient;
+      adminVoteSubmit.addEventListener('mouseenter', function() {
+        this.style.background = theme.hover;
+      });
+      adminVoteSubmit.addEventListener('mouseleave', function() {
+        this.style.background = theme.gradient;
+      });
+    }
+
+    // Timer settings and admin vote overlays
+    const overlayContainers = document.querySelectorAll('.timer-settings-container, .admin-vote-container, .timer-confirmation-container');
+    overlayContainers.forEach(container => {
+      container.style.border = `2px solid ${theme.primary}`;
+      container.style.boxShadow = `0 20px 60px ${theme.glow}`;
+    });
+
+    // Overlay headers
+    const overlayHeaders = document.querySelectorAll('.timer-settings-header, .admin-vote-header, .timer-confirmation-header');
+    overlayHeaders.forEach(header => {
+      header.style.background = theme.gradient;
+    });
+
+    // Input focus effects in overlays
+    const overlayInputs = document.querySelectorAll('.timer-input-group input, .admin-vote-input-group input, .admin-vote-input-group select');
+    overlayInputs.forEach(input => {
+      input.addEventListener('focus', function() {
+        this.style.borderColor = theme.primary;
+        this.style.boxShadow = `0 0 10px ${theme.glow}`;
+      });
+    });
+
+    // Leaderboard vote count color
+    const voteCountCells = document.querySelectorAll('#leaderboard td:last-child, .fullscreen-results-table td:last-child');
+    voteCountCells.forEach(cell => {
+      cell.style.color = theme.primary;
+    });
+
+    // Medal colors for top ranks
+    const rank1Medals = document.querySelectorAll('.rank-1 .rank-medal, .fullscreen-rank-1 .fullscreen-rank-medal');
+    rank1Medals.forEach(medal => {
+      medal.style.background = theme.gradient;
+    });
+  }
+
+  // Apply the random theme
+  applyTheme(randomTheme);
+  console.log('Applied theme:', themeNames[themeNames.findIndex(name => themes[name] === randomTheme)]);
+
   // Comprehensive protection against user interactions
   function preventInteractions() {
     // Disable right-click context menu
@@ -810,15 +995,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add Vote button event listener
     const voteBtn = document.getElementById('vote-btn');
-    const voteContainer = document.getElementById('admin-vote-container');
-    if (voteBtn && voteContainer) {
+    if (voteBtn) {
       voteBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        if (voteContainer.style.display === 'none' || voteContainer.style.display === '') {
-          voteContainer.style.display = 'block';
-        } else {
-          voteContainer.style.display = 'none';
-        }
+        showAdminVoteOverlay();
       });
     }
 
@@ -837,6 +1017,15 @@ document.addEventListener('DOMContentLoaded', function() {
       timerBtn.addEventListener('click', function(e) {
         e.preventDefault();
         showTimerSettings();
+      });
+    }
+
+    // Add Revote button event listener
+    const revoteBtn = document.getElementById('revote-btn');
+    if (revoteBtn) {
+      revoteBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        enableRevote();
       });
     }
 
@@ -924,6 +1113,30 @@ document.addEventListener('DOMContentLoaded', function() {
       timerStopBtn.addEventListener('click', function(e) {
         e.preventDefault();
         stopTimer();
+      });
+    }
+
+    // Add admin vote overlay event listeners
+    const adminVoteCloseBtn = document.getElementById('admin-vote-close-btn');
+    const adminVoteOverlay = document.getElementById('admin-vote-overlay');
+    const adminVoteSubmitBtn = document.getElementById('admin-vote-submit-btn');
+
+    if (adminVoteCloseBtn) {
+      adminVoteCloseBtn.addEventListener('click', closeAdminVoteOverlay);
+    }
+
+    if (adminVoteOverlay) {
+      adminVoteOverlay.addEventListener('click', function(e) {
+        if (e.target === adminVoteOverlay) {
+          closeAdminVoteOverlay();
+        }
+      });
+    }
+
+    if (adminVoteSubmitBtn) {
+      adminVoteSubmitBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        submitAdminVoteFromOverlay();
       });
     }
 
@@ -1612,6 +1825,215 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Enable revote function
+  function enableRevote() {
+    if (confirm('آیا مطمئن هستید که می‌خواهید همه کاربران بتوانند دوباره رای بدهند؟')) {
+      // Clear user voting state from Firebase
+      if (window.firebaseDb && window.firebaseDb.useFirebase) {
+        try {
+          const userStatesRef = window.firebaseDb.ref(window.firebaseDb.database, 'userStates');
+          window.firebaseDb.set(userStatesRef, {})
+            .then(() => {
+              console.log('User states cleared in Firebase');
+              // Clear local user state
+              localStorage.removeItem('hasVoted');
+              localStorage.removeItem('votedFor');
+              
+              // Reset UI
+              const inputField = document.querySelector('.input-container input');
+              const sendButton = document.querySelector('.input-container .button');
+              const inputContainer = document.querySelector('.input-container');
+
+              if (inputField) {
+                inputField.disabled = false;
+                inputField.value = '';
+              }
+
+              if (sendButton) {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+              }
+
+              if (inputContainer) {
+                inputContainer.classList.remove('error', 'success', 'voted');
+              }
+
+              alert('همه کاربران حالا می‌توانند دوباره رای بدهند!');
+            })
+            .catch((error) => {
+              console.log('Firebase revote error:', error);
+              // Only clear local state
+              localStorage.removeItem('hasVoted');
+              localStorage.removeItem('votedFor');
+              
+              const inputField = document.querySelector('.input-container input');
+              const sendButton = document.querySelector('.input-container .button');
+              const inputContainer = document.querySelector('.input-container');
+
+              if (inputField) {
+                inputField.disabled = false;
+                inputField.value = '';
+              }
+
+              if (sendButton) {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+              }
+
+              if (inputContainer) {
+                inputContainer.classList.remove('error', 'success', 'voted');
+              }
+
+              alert('Revote فعال شد (localStorage فقط)');
+            });
+        } catch (error) {
+          console.log('Firebase revote error:', error);
+          // Fallback to localStorage only
+          localStorage.removeItem('hasVoted');
+          localStorage.removeItem('votedFor');
+          alert('Revote فعال شد (Firebase در دسترس نیست)');
+        }
+      } else {
+        // Only localStorage available
+        localStorage.removeItem('hasVoted');
+        localStorage.removeItem('votedFor');
+        
+        const inputField = document.querySelector('.input-container input');
+        const sendButton = document.querySelector('.input-container .button');
+        const inputContainer = document.querySelector('.input-container');
+
+        if (inputField) {
+          inputField.disabled = false;
+          inputField.value = '';
+        }
+
+        if (sendButton) {
+          sendButton.disabled = false;
+          sendButton.textContent = 'Send';
+        }
+
+        if (inputContainer) {
+          inputContainer.classList.remove('error', 'success', 'voted');
+        }
+
+        alert('Revote فعال شد!');
+      }
+    }
+  }
+
+  // Show admin vote overlay
+  function showAdminVoteOverlay() {
+    const overlay = document.getElementById('admin-vote-overlay');
+    if (overlay) {
+      overlay.classList.add('show');
+      
+      // Clear previous inputs
+      const usernameInput = document.getElementById('admin-vote-username');
+      const countInput = document.getElementById('admin-vote-count');
+      const operationSelect = document.getElementById('admin-vote-operation');
+      
+      if (usernameInput) usernameInput.value = '';
+      if (countInput) countInput.value = '';
+      if (operationSelect) operationSelect.value = 'add';
+    }
+  }
+
+  // Close admin vote overlay
+  function closeAdminVoteOverlay() {
+    const overlay = document.getElementById('admin-vote-overlay');
+    if (overlay) {
+      overlay.classList.remove('show');
+    }
+  }
+
+  // Submit admin vote from overlay
+  function submitAdminVoteFromOverlay() {
+    const usernameInput = document.getElementById('admin-vote-username');
+    const countInput = document.getElementById('admin-vote-count');
+    const operationSelect = document.getElementById('admin-vote-operation');
+
+    const username = usernameInput.value.trim();
+    const count = parseInt(countInput.value);
+    const operation = operationSelect.value;
+
+    if (!username) {
+      alert('لطفاً نام کاربری را وارد کنید');
+      return;
+    }
+
+    if (!count || count <= 0) {
+      alert('لطفاً تعداد رای معتبر وارد کنید');
+      return;
+    }
+
+    // Validate and convert username
+    const validation = validateAndConvert(username);
+    if (!validation.isValid) {
+      alert('نام کاربری نامعتبر است');
+      return;
+    }
+
+    const isSubtract = operation === 'subtract';
+    const convertedUsername = validation.convertedText;
+
+    // Submit votes using existing function
+    if (window.firebaseDb && window.firebaseDb.useFirebase) {
+      try {
+        const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
+        window.firebaseDb.onValue(votesRef, (snapshot) => {
+          const votes = snapshot.val() || {};
+
+          // Add or subtract votes for this user
+          if (votes[convertedUsername]) {
+            votes[convertedUsername] += isSubtract ? -count : count;
+            if (votes[convertedUsername] < 0) {
+              votes[convertedUsername] = 0;  // Prevent negative votes
+            }
+          } else {
+            votes[convertedUsername] = isSubtract ? 0 : count; // Start from 0 if subtracting
+          }
+
+          // Save back to Firebase
+          window.firebaseDb.set(votesRef, votes)
+            .then(() => {
+              console.log('Admin vote submitted successfully from overlay');
+              closeAdminVoteOverlay();
+              alert(`${count} رای برای ${convertedUsername} ${isSubtract ? 'کم شد' : 'ثبت شد'}`);
+              updateLeaderboard();
+            })
+            .catch((error) => {
+              console.log('Firebase write error:', error);
+              submitAdminVoteToLocalStorageFromOverlay(convertedUsername, count, isSubtract);
+            });
+        }, { onlyOnce: true });
+      } catch (error) {
+        console.log('Firebase error:', error);
+        submitAdminVoteToLocalStorageFromOverlay(convertedUsername, count, isSubtract);
+      }
+    } else {
+      submitAdminVoteToLocalStorageFromOverlay(convertedUsername, count, isSubtract);
+    }
+  }
+
+  // Submit admin vote to localStorage from overlay
+  function submitAdminVoteToLocalStorageFromOverlay(username, voteCount, isSubtract) {
+    const votes = JSON.parse(localStorage.getItem('votes') || '{}');
+
+    if (votes[username]) {
+      votes[username] += isSubtract ? -voteCount : voteCount;
+      if (votes[username] < 0) {
+        votes[username] = 0;  // Prevent negative votes
+      }
+    } else {
+      votes[username] = isSubtract ? 0 : voteCount; // Start from 0 if subtracting
+    }
+
+    localStorage.setItem('votes', JSON.stringify(votes));
+    closeAdminVoteOverlay();
+    alert(`${voteCount} رای برای ${username} ${isSubtract ? 'کم شد' : 'ثبت شد'}`);
+    updateLeaderboard();
+  }
+
   // Make functions globally available
   window.updateLeaderboard = updateLeaderboard;
   window.submitAdminVote = submitAdminVote;
@@ -1622,4 +2044,7 @@ document.addEventListener('DOMContentLoaded', function() {
   window.initializeTimer = initializeTimer;
   window.showTimerConfirmation = showTimerConfirmation;
   window.closeTimerConfirmation = closeTimerConfirmation;
+  window.enableRevote = enableRevote;
+  window.showAdminVoteOverlay = showAdminVoteOverlay;
+  window.closeAdminVoteOverlay = closeAdminVoteOverlay;
 });

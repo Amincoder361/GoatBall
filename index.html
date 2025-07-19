@@ -137,6 +137,7 @@
           <button class="admin-btn" id="reset-btn">Reset</button>
           <button class="admin-btn" id="lock-btn">Lock ❌</button>
           <button class="admin-btn" id="vote-btn">Vote</button>
+          <button class="admin-btn" id="revote-btn">Revote</button>
           <button class="admin-btn" id="full-result-btn">Full Result</button>
           <button class="admin-btn" id="timer-btn">Timer</button>
         </div>
@@ -185,6 +186,38 @@
           <div class="timer-actions">
             <button class="admin-timer-submit" id="admin-timer-submit">شروع تایمر</button>
             <button class="admin-timer-stop" id="admin-timer-stop">توقف تایمر</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Vote Overlay -->
+  <div class="admin-vote-overlay" id="admin-vote-overlay">
+    <div class="admin-vote-container">
+      <div class="admin-vote-header">
+        <h2>مدیریت رای‌ها</h2>
+        <button class="admin-vote-close-btn" id="admin-vote-close-btn">✕</button>
+      </div>
+      <div class="admin-vote-content">
+        <div class="admin-vote-form">
+          <div class="admin-vote-input-group">
+            <label>نام کاربری:</label>
+            <input type="text" id="admin-vote-username" placeholder="@username" />
+          </div>
+          <div class="admin-vote-input-group">
+            <label>عملیات:</label>
+            <select id="admin-vote-operation">
+              <option value="add">اضافه کردن (+)</option>
+              <option value="subtract">کم کردن (-)</option>
+            </select>
+          </div>
+          <div class="admin-vote-input-group">
+            <label>تعداد رای:</label>
+            <input type="number" id="admin-vote-count" placeholder="5" min="1" />
+          </div>
+          <div class="admin-vote-actions">
+            <button class="admin-vote-submit-btn" id="admin-vote-submit-btn">اعمال تغییرات</button>
           </div>
         </div>
       </div>
