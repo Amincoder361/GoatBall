@@ -150,8 +150,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Admin access variables
-  let homeClickCount = 0;
-  let homeClickTimer = null;
   let longPressTimer = null;
   let isLongPress = false;
 
@@ -207,108 +205,120 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   menuLinks.forEach(link => {
-    // Mouse down event for long press detection
-    link.addEventListener('mousedown', function(e) {
-      isLongPress = false;
-      longPressTimer = setTimeout(() => {
-        isLongPress = true;
-        showAdminLogin();
-      }, 5000); // 5 seconds
-    });
+    const isHomeLink = link.getAttribute('data-page') === 'home';
 
-    // Mouse up event to clear long press timer
-    link.addEventListener('mouseup', function(e) {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-      }
-    });
+    // Only add long press events to Home link
+    if (isHomeLink) {
+      // Mouse down event for long press detection (only for Home)
+      link.addEventListener('mousedown', function(e) {
+        isLongPress = false;
+        longPressTimer = setTimeout(() => {
+          isLongPress = true;
+          showAdminLogin();
+        }, 3000); // 3 seconds
+      });
 
-    // Mouse leave event to clear long press timer
-    link.addEventListener('mouseleave', function(e) {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-      }
-    });
+      // Mouse up event to clear long press timer
+      link.addEventListener('mouseup', function(e) {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      });
 
-    // Touch start event for mobile long press
-    link.addEventListener('touchstart', function(e) {
-      isLongPress = false;
-      longPressTimer = setTimeout(() => {
-        isLongPress = true;
-        showAdminLogin();
-      }, 5000); // 5 seconds
-    });
+      // Mouse leave event to clear long press timer
+      link.addEventListener('mouseleave', function(e) {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      });
 
-    // Touch end event to clear long press timer
-    link.addEventListener('touchend', function(e) {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-      }
+      // Touch start event for mobile long press (only for Home)
+      link.addEventListener('touchstart', function(e) {
+        isLongPress = false;
+        longPressTimer = setTimeout(() => {
+          isLongPress = true;
+          showAdminLogin();
+        }, 3000); // 3 seconds
+      });
 
-      // If it was a long press, prevent normal click behavior
-      if (isLongPress) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Remove active class from all links
-      menuLinks.forEach(l => l.classList.remove('active'));
-
-      // Add active class to touched link
-      this.classList.add('active');
-
-      // Switch to the selected page
-      const targetPage = this.getAttribute('data-page');
-      switchPage(targetPage);
-
-      // Update leaderboard if switching to result page
-      if (targetPage === 'result') {
-        setTimeout(() => {
-          updateLeaderboard();
-        }, 500);
-      }
-
-      // Remove focus immediately
-      this.blur();
-    });
-
-    // Click event
-    link.addEventListener('click', function(e) {
-      // If it was a long press, prevent normal click behavior
-      if (isLongPress) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Check for admin access (triple click on Home)
-      if (this.getAttribute('data-page') === 'home') {
-        homeClickCount++;
-
-        if (homeClickTimer) {
-          clearTimeout(homeClickTimer);
+      // Touch end event to clear long press timer
+      link.addEventListener('touchend', function(e) {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
         }
 
-        homeClickTimer = setTimeout(() => {
-          homeClickCount = 0;
-        }, 1000);
-
-        if (homeClickCount === 3) {
-          homeClickCount = 0;
-          showAdminLogin();
+        // If it was a long press, prevent normal click behavior
+        if (isLongPress) {
+          e.preventDefault();
+          e.stopPropagation();
           return;
         }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Remove active class from all links
+        menuLinks.forEach(l => l.classList.remove('active'));
+
+        // Add active class to touched link
+        this.classList.add('active');
+
+        // Switch to the selected page
+        const targetPage = this.getAttribute('data-page');
+        switchPage(targetPage);
+
+        // Update leaderboard if switching to result page
+        if (targetPage === 'result') {
+          setTimeout(() => {
+            updateLeaderboard();
+          }, 500);
+        }
+
+        // Remove focus immediately
+        this.blur();
+      });
+    } else {
+      // For non-Home links, add simple touch end event
+      link.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Remove active class from all links
+        menuLinks.forEach(l => l.classList.remove('active'));
+
+        // Add active class to touched link
+        this.classList.add('active');
+
+        // Switch to the selected page
+        const targetPage = this.getAttribute('data-page');
+        switchPage(targetPage);
+
+        // Update leaderboard if switching to result page
+        if (targetPage === 'result') {
+          setTimeout(() => {
+            updateLeaderboard();
+          }, 500);
+        }
+
+        // Remove focus immediately
+        this.blur();
+      });
+    }
+
+    // Click event (for all links)
+    link.addEventListener('click', function(e) {
+      // If it was a long press on Home, prevent normal click behavior
+      if (isHomeLink && isLongPress) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
       }
+
+      e.preventDefault();
+      e.stopPropagation();
 
       // Remove active class from all links
       menuLinks.forEach(l => l.classList.remove('active'));
@@ -338,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
       this.blur();
     });
 
-    // Prevent context menu on long press
+    // Prevent context menu
     link.addEventListener('contextmenu', function(e) {
       e.preventDefault();
     });
@@ -450,6 +460,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function showAdminPanel() {
+    // Mark admin access for this session
+    sessionStorage.setItem('isAdmin', 'true');
+    
     // Hide all pages
     pages.forEach(page => {
       page.style.display = 'none';
@@ -501,29 +514,68 @@ document.addEventListener('DOMContentLoaded', function() {
       // Reset lock state
       setLockState(false);
 
+      // Stop timer if running
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+      timerEndTime = null;
+      hideCountdown();
+
       // Reset Firebase data if using Firebase
       if (window.firebaseDb && window.firebaseDb.useFirebase) {
         try {
-          // Clear votes from Firebase
-          const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
-          window.firebaseDb.set(votesRef, {})
+          const database = window.firebaseDb.database;
+          const resetTimestamp = Date.now();
+          
+          // Clear all Firebase data including global reset trigger
+          const promises = [
+            // Clear votes
+            window.firebaseDb.set(window.firebaseDb.ref(database, 'votes'), {}),
+            // Clear site lock
+            window.firebaseDb.set(window.firebaseDb.ref(database, 'siteLocked'), false),
+            // Clear admin actions
+            window.firebaseDb.set(window.firebaseDb.ref(database, 'adminActions'), {}),
+            // Clear results
+            window.firebaseDb.set(window.firebaseDb.ref(database, 'results'), {}),
+            // Clear timer
+            window.firebaseDb.set(window.firebaseDb.ref(database, 'contestTimer'), {
+              endTime: null,
+              active: false
+            }),
+            // Clear user states (this will reset all users)
+            window.firebaseDb.set(window.firebaseDb.ref(database, 'userStates'), {}),
+            // Set global reset trigger
+            window.firebaseDb.set(window.firebaseDb.ref(database, 'globalReset'), {
+              timestamp: resetTimestamp,
+              triggered: true
+            })
+          ];
+
+          Promise.all(promises)
             .then(() => {
-              console.log('Firebase votes cleared');
+              console.log('All Firebase data cleared and global reset triggered');
               // Update leaderboard
               updateLeaderboard();
+              alert('سایت و تمام اطلاعات Firebase با موفقیت ریست شد! همه کاربران ریست شدند.');
             })
             .catch((error) => {
               console.log('Firebase clear error:', error);
+              // Update leaderboard anyway
+              updateLeaderboard();
+              alert('سایت ریست شد، ولی مشکلی در پاک کردن Firebase وجود داشت. لطفاً Firebase Rules را بررسی کنید.');
             });
         } catch (error) {
           console.log('Firebase reset error:', error);
+          // Update leaderboard
+          updateLeaderboard();
+          alert('سایت ریست شد (localStorage)، ولی Firebase در دسترس نیست.');
         }
+      } else {
+        // Update leaderboard
+        updateLeaderboard();
+        alert('سایت با موفقیت ریست شد!');
       }
-
-      // Update leaderboard
-      updateLeaderboard();
-
-      alert('سایت با موفقیت ریست شد!');
     }
   }
 
@@ -875,7 +927,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    // Initialize timer system
+    // Initialize timer system for all users
     initializeTimer();
   }, 100);
 
@@ -1158,6 +1210,70 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Check for global reset and reset user state if needed
+  function checkGlobalReset() {
+    if (window.firebaseDb && window.firebaseDb.useFirebase) {
+      try {
+        const resetRef = window.firebaseDb.ref(window.firebaseDb.database, 'globalReset');
+        window.firebaseDb.onValue(resetRef, (snapshot) => {
+          const resetData = snapshot.val();
+          if (resetData && resetData.triggered) {
+            const lastResetCheck = localStorage.getItem('lastResetCheck');
+            const currentResetTime = resetData.timestamp;
+            
+            // If this is a new reset (timestamp is newer than our last check)
+            if (!lastResetCheck || parseInt(lastResetCheck) < currentResetTime) {
+              console.log('Global reset detected, clearing user data');
+              
+              // Clear all user data
+              localStorage.clear();
+              sessionStorage.clear();
+              
+              // Save the reset timestamp so we don't reset again
+              localStorage.setItem('lastResetCheck', currentResetTime.toString());
+              
+              // Reset UI elements
+              const inputField = document.querySelector('.input-container input');
+              const sendButton = document.querySelector('.input-container .button');
+              const inputContainer = document.querySelector('.input-container');
+
+              if (inputField) {
+                inputField.value = '';
+                inputField.disabled = false;
+              }
+
+              if (sendButton) {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+              }
+
+              if (inputContainer) {
+                inputContainer.classList.remove('error', 'success', 'voted');
+              }
+
+              // Stop timer if running
+              if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+              }
+              timerEndTime = null;
+              hideCountdown();
+
+              // Update leaderboard
+              updateLeaderboard();
+              
+              console.log('User state reset due to global reset');
+            }
+          }
+        }, (error) => {
+          console.log('Error checking global reset:', error);
+        });
+      } catch (error) {
+        console.log('Firebase error in checkGlobalReset:', error);
+      }
+    }
+  }
+
   // Initialize vote state
   function initializeVoteState() {
     const hasVoted = localStorage.getItem('hasVoted') === 'true';
@@ -1172,6 +1288,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Initialize vote state when page loads
   initializeVoteState();
+
+  // Check for global reset
+  setTimeout(() => {
+    checkGlobalReset();
+  }, 1500); // Check after Firebase connection
+
+  // Initialize timer system immediately for all users
+  initializeTimer();
 
   // Initialize leaderboard when page loads
   setTimeout(() => {
@@ -1343,12 +1467,19 @@ document.addEventListener('DOMContentLoaded', function() {
         countdownInterval = null;
         hideCountdown();
 
-        // Auto-lock the site
+        // Auto-lock the site for everyone
         setLockState(true);
-        alert('مسابقه به پایان رسید! سایت به طور خودکار قفل شد.');
+        
+        // Show alert only once per session
+        const alertShown = sessionStorage.getItem('timerFinishedAlert');
+        if (!alertShown) {
+          alert('مسابقه به پایان رسید! سایت به طور خودکار قفل شد.');
+          sessionStorage.setItem('timerFinishedAlert', 'true');
+        }
 
-        // Update timer status
-        if (window.firebaseDb && window.firebaseDb.useFirebase) {
+        // Update timer status (only if admin)
+        const hasAdminAccess = sessionStorage.getItem('isAdmin') === 'true';
+        if (hasAdminAccess && window.firebaseDb && window.firebaseDb.useFirebase) {
           try {
             const timerRef = window.firebaseDb.ref(window.firebaseDb.database, 'contestTimer');
             window.firebaseDb.set(timerRef, {
@@ -1358,7 +1489,7 @@ document.addEventListener('DOMContentLoaded', function() {
           } catch (error) {
             console.log('Firebase timer finish error:', error);
           }
-        } else {
+        } else if (!window.firebaseDb || !window.firebaseDb.useFirebase) {
           localStorage.setItem('contestTimer', JSON.stringify({
             endTime: null,
             active: false
@@ -1415,6 +1546,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (window.firebaseDb && window.firebaseDb.useFirebase) {
         try {
           const timerRef = window.firebaseDb.ref(window.firebaseDb.database, 'contestTimer');
+          // Listen for real-time updates to timer
           window.firebaseDb.onValue(timerRef, (snapshot) => {
             const timerData = snapshot.val();
             console.log('Timer data received from Firebase:', timerData);
@@ -1425,12 +1557,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 startCountdown();
                 console.log('Timer started from Firebase');
               } else {
-                // Timer expired, clean up
-                window.firebaseDb.set(timerRef, {
-                  endTime: null,
-                  active: false
-                });
+                // Timer expired, auto-lock for everyone
+                if (countdownInterval) {
+                  clearInterval(countdownInterval);
+                  countdownInterval = null;
+                }
                 hideCountdown();
+                setLockState(true);
+                // Clean up expired timer (only if we're admin)
+                const hasAdminAccess = sessionStorage.getItem('isAdmin') === 'true';
+                if (hasAdminAccess) {
+                  window.firebaseDb.set(timerRef, {
+                    endTime: null,
+                    active: false
+                  });
+                }
               }
             } else {
               hideCountdown();
@@ -1457,12 +1598,13 @@ document.addEventListener('DOMContentLoaded', function() {
           timerEndTime = timerData.endTime;
           startCountdown();
         } else {
-          // Timer expired, clean up
+          // Timer expired, clean up and auto-lock
           localStorage.setItem('contestTimer', JSON.stringify({
             endTime: null,
             active: false
           }));
           hideCountdown();
+          setLockState(true);
         }
       } else {
         hideCountdown();
