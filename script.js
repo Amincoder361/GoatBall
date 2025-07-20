@@ -445,11 +445,21 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         e.stopPropagation();
 
-        // Remove active class from all links
-        menuLinks.forEach(l => l.classList.remove('active'));
+        // Remove active class from all links and reset styles
+        menuLinks.forEach(l => {
+          l.classList.remove('active');
+          l.style.background = 'transparent';
+          l.style.color = randomTheme.primary;
+          l.style.border = `1px solid transparent`;
+          l.style.boxShadow = 'none';
+        });
 
-        // Add active class to touched link
+        // Add active class to touched link and apply active styles
         this.classList.add('active');
+        this.style.background = randomTheme.gradient;
+        this.style.color = '#272727';
+        this.style.border = `1px solid ${randomTheme.primary}`;
+        this.style.boxShadow = `0 0 15px ${randomTheme.glow}`;
 
         // Switch to the selected page
         const targetPage = this.getAttribute('data-page');
@@ -471,11 +481,21 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         e.stopPropagation();
 
-        // Remove active class from all links
-        menuLinks.forEach(l => l.classList.remove('active'));
+        // Remove active class from all links and reset styles
+        menuLinks.forEach(l => {
+          l.classList.remove('active');
+          l.style.background = 'transparent';
+          l.style.color = randomTheme.primary;
+          l.style.border = `1px solid transparent`;
+          l.style.boxShadow = 'none';
+        });
 
-        // Add active class to touched link
+        // Add active class to touched link and apply active styles
         this.classList.add('active');
+        this.style.background = randomTheme.gradient;
+        this.style.color = '#272727';
+        this.style.border = `1px solid ${randomTheme.primary}`;
+        this.style.boxShadow = `0 0 15px ${randomTheme.glow}`;
 
         // Switch to the selected page
         const targetPage = this.getAttribute('data-page');
@@ -505,11 +525,21 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       e.stopPropagation();
 
-      // Remove active class from all links
-      menuLinks.forEach(l => l.classList.remove('active'));
+      // Remove active class from all links and reset styles
+      menuLinks.forEach(l => {
+        l.classList.remove('active');
+        l.style.background = 'transparent';
+        l.style.color = randomTheme.primary;
+        l.style.border = `1px solid transparent`;
+        l.style.boxShadow = 'none';
+      });
 
-      // Add active class to clicked link
+      // Add active class to clicked link and apply active styles
       this.classList.add('active');
+      this.style.background = randomTheme.gradient;
+      this.style.color = '#272727';
+      this.style.border = `1px solid ${randomTheme.primary}`;
+      this.style.boxShadow = `0 0 15px ${randomTheme.glow}`;
 
       // Switch to the selected page
       const targetPage = this.getAttribute('data-page');
@@ -647,7 +677,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function showAdminPanel() {
     // Mark admin access for this session
     sessionStorage.setItem('isAdmin', 'true');
-    
+
     // Hide all pages
     pages.forEach(page => {
       page.style.display = 'none';
@@ -712,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
           const database = window.firebaseDb.database;
           const resetTimestamp = Date.now();
-          
+
           // Clear all Firebase data including global reset trigger
           const promises = [
             // Clear votes
@@ -1301,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', function() {
     markAsVoted();
   }
 
-  
+
 
   // Mark input as voted
   function markAsVoted() {
@@ -1423,6 +1453,100 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Check for revote flag and reset user vote state if needed
+  function checkRevoteFlag() {
+    if (window.firebaseDb && window.firebaseDb.useFirebase) {
+      try {
+        const allowRevoteRef = window.firebaseDb.ref(window.firebaseDb.database, 'allowRevote');
+        window.firebaseDb.onValue(allowRevoteRef, (snapshot) => {
+          const revoteData = snapshot.val();
+          console.log('Checking revote flag:', revoteData);
+
+          if (revoteData && revoteData.enabled) {
+            const lastRevoteCheck = localStorage.getItem('lastRevoteCheck');
+            const currentRevoteTime = revoteData.timestamp;
+            const hasVoted = localStorage.getItem('hasVoted') === 'true';
+
+            // If this is a new revote timestamp, reset ALL users regardless of their voting status
+            if (!lastRevoteCheck || parseInt(lastRevoteCheck) < currentRevoteTime) {
+              console.log('Revote enabled detected, clearing user voting state for ALL users');
+
+              // Clear user voting state
+              localStorage.removeItem('hasVoted');
+              localStorage.removeItem('votedFor');
+
+              // Save the revote timestamp so we don't reset again for the same revote
+              localStorage.setItem('lastRevoteCheck', currentRevoteTime.toString());
+
+              // Reset voting UI
+              const inputField = document.querySelector('.input-container input');
+              const sendButton = document.querySelector('.input-container .button');
+              const inputContainer = document.querySelector('.input-container');
+
+              if (inputField) {
+                inputField.disabled = false;
+                inputField.value = '';
+              }
+
+              if (sendButton) {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+              }
+
+              if (inputContainer) {
+                inputContainer.classList.remove('error', 'success', 'voted');
+              }
+
+              console.log('User voting state reset due to revote flag');
+
+              // Show notification to ALL users (not just those who voted)
+              setTimeout(() => {
+                try {
+                  const inputElement = document.querySelector('.input-container input');
+                  if (inputElement && !inputElement.disabled && document.body) {
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                      position: fixed;
+                      top: 20px;
+                      right: 20px;
+                      background: linear-gradient(135deg, #00FF00 0%, #006400 100%);
+                      color: white;
+                      padding: 15px 20px;
+                      border-radius: 10px;
+                      z-index: 10000;
+                      font-weight: bold;
+                      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                      font-family: Arial, sans-serif;
+                    `;
+                    notification.textContent = 'رای‌گیری دوباره فعال شد! شما می‌توانید دوباره رای بدهید!';
+
+                    document.body.appendChild(notification);
+
+                    setTimeout(() => {
+                      try {
+                        if (notification && notification.parentNode) {
+                          notification.parentNode.removeChild(notification);
+                        }
+                      } catch (removeError) {
+                        console.log('Error removing notification:', removeError);
+                      }
+                    }, 5000);
+                  }
+                } catch (notificationError) {
+                  console.log('Error creating notification:', notificationError);
+                }
+              }, 1500);
+            }
+          }
+        }, (error) => {
+          console.log('Error checking revote flag:', error);
+        });
+      } catch (error) {
+        console.log('Firebase error in checkRevoteFlag:', error);
+      }
+    }
+  }
+
   // Check for global reset and reset user state if needed
   function checkGlobalReset() {
     if (window.firebaseDb && window.firebaseDb.useFirebase) {
@@ -1433,18 +1557,18 @@ document.addEventListener('DOMContentLoaded', function() {
           if (resetData && resetData.triggered) {
             const lastResetCheck = localStorage.getItem('lastResetCheck');
             const currentResetTime = resetData.timestamp;
-            
+
             // If this is a new reset (timestamp is newer than our last check)
             if (!lastResetCheck || parseInt(lastResetCheck) < currentResetTime) {
               console.log('Global reset detected, clearing user data');
-              
+
               // Clear all user data
               localStorage.clear();
               sessionStorage.clear();
-              
+
               // Save the reset timestamp so we don't reset again
               localStorage.setItem('lastResetCheck', currentResetTime.toString());
-              
+
               // Reset UI elements
               const inputField = document.querySelector('.input-container input');
               const sendButton = document.querySelector('.input-container .button');
@@ -1474,7 +1598,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
               // Update leaderboard
               updateLeaderboard();
-              
+
               console.log('User state reset due to global reset');
             }
           }
@@ -1502,10 +1626,16 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize vote state when page loads
   initializeVoteState();
 
-  // Check for global reset
+  // Check for global reset and revote flag earlier and more frequently
   setTimeout(() => {
     checkGlobalReset();
-  }, 1500); // Check after Firebase connection
+    checkRevoteFlag();
+  }, 1000); // Check after Firebase connection
+
+  // Check revote flag every 5 seconds to catch any updates
+  setInterval(() => {
+    checkRevoteFlag();
+  }, 5000);
 
   // Initialize timer system immediately for all users
   initializeTimer();
@@ -1682,7 +1812,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Auto-lock the site for everyone
         setLockState(true);
-        
+
         // Show alert only once per session
         const alertShown = sessionStorage.getItem('timerFinishedAlert');
         if (!alertShown) {
@@ -1827,77 +1957,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Enable revote function
   function enableRevote() {
-    if (confirm('آیا مطمئن هستید که می‌خواهید همه کاربران بتوانند دوباره رای بدهند؟')) {
-      // Clear user voting state from Firebase
+    if (confirm('آیا مطمئن هستید که می‌خواهید تمام رای‌ها پاک شود و همه کاربران بتوانند دوباره رای بدهند؟')) {
       if (window.firebaseDb && window.firebaseDb.useFirebase) {
         try {
-          const userStatesRef = window.firebaseDb.ref(window.firebaseDb.database, 'userStates');
-          window.firebaseDb.set(userStatesRef, {})
+          const revoteTimestamp = Date.now();
+
+          // Clear all votes first
+          const votesRef = window.firebaseDb.ref(window.firebaseDb.database, 'votes');
+
+          window.firebaseDb.set(votesRef, {})
             .then(() => {
-              console.log('User states cleared in Firebase');
-              // Clear local user state
-              localStorage.removeItem('hasVoted');
-              localStorage.removeItem('votedFor');
-              
-              // Reset UI
-              const inputField = document.querySelector('.input-container input');
-              const sendButton = document.querySelector('.input-container .button');
-              const inputContainer = document.querySelector('.input-container');
-
-              if (inputField) {
-                inputField.disabled = false;
-                inputField.value = '';
-              }
-
-              if (sendButton) {
-                sendButton.disabled = false;
-                sendButton.textContent = 'Send';
-              }
-
-              if (inputContainer) {
-                inputContainer.classList.remove('error', 'success', 'voted');
-              }
-
-              alert('همه کاربران حالا می‌توانند دوباره رای بدهند!');
+              console.log('All votes cleared from Firebase');
+              // Clear all user states
+              const userStatesRef = window.firebaseDb.ref(window.firebaseDb.database, 'userStates');
+              return window.firebaseDb.set(userStatesRef, {});
+            })
+            .then(() => {
+              console.log('All user states cleared from Firebase');
+              // Set allowRevote flag in Firebase
+              const allowRevoteRef = window.firebaseDb.ref(window.firebaseDb.database, 'allowRevote');
+              return window.firebaseDb.set(allowRevoteRef, {
+                enabled: true,
+                timestamp: revoteTimestamp
+              });
+            })
+            .then(() => {
+              console.log('Revote enabled in Firebase for all users');
+              // Update leaderboard to show empty state
+              updateLeaderboard();
+              alert('تمام رای‌ها پاک شد و همه کاربران حالا می‌توانند دوباره رای بدهند!');
             })
             .catch((error) => {
               console.log('Firebase revote error:', error);
-              // Only clear local state
-              localStorage.removeItem('hasVoted');
-              localStorage.removeItem('votedFor');
-              
-              const inputField = document.querySelector('.input-container input');
-              const sendButton = document.querySelector('.input-container .button');
-              const inputContainer = document.querySelector('.input-container');
-
-              if (inputField) {
-                inputField.disabled = false;
-                inputField.value = '';
-              }
-
-              if (sendButton) {
-                sendButton.disabled = false;
-                sendButton.textContent = 'Send';
-              }
-
-              if (inputContainer) {
-                inputContainer.classList.remove('error', 'success', 'voted');
-              }
-
-              alert('Revote فعال شد (localStorage فقط)');
+              alert('خطا در فعال کردن revote در Firebase');
             });
         } catch (error) {
           console.log('Firebase revote error:', error);
-          // Fallback to localStorage only
-          localStorage.removeItem('hasVoted');
-          localStorage.removeItem('votedFor');
-          alert('Revote فعال شد (Firebase در دسترس نیست)');
+          alert('Firebase در دسترس نیست');
         }
       } else {
-        // Only localStorage available
+        alert('Firebase در دسترس نیست - revote فقط برای کاربر فعلی کار می‌کند');
+        // Clear local votes and state
+        localStorage.removeItem('votes');
         localStorage.removeItem('hasVoted');
         localStorage.removeItem('votedFor');
-        
+
         const inputField = document.querySelector('.input-container input');
         const sendButton = document.querySelector('.input-container .button');
         const inputContainer = document.querySelector('.input-container');
@@ -1916,7 +2020,8 @@ document.addEventListener('DOMContentLoaded', function() {
           inputContainer.classList.remove('error', 'success', 'voted');
         }
 
-        alert('Revote فعال شد!');
+        // Update leaderboard
+        updateLeaderboard();
       }
     }
   }
@@ -1926,12 +2031,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const overlay = document.getElementById('admin-vote-overlay');
     if (overlay) {
       overlay.classList.add('show');
-      
+
       // Clear previous inputs
       const usernameInput = document.getElementById('admin-vote-username');
       const countInput = document.getElementById('admin-vote-count');
       const operationSelect = document.getElementById('admin-vote-operation');
-      
+
       if (usernameInput) usernameInput.value = '';
       if (countInput) countInput.value = '';
       if (operationSelect) operationSelect.value = 'add';
